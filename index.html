@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>北美求职手册 V3.0</title>
+    <title>V4.0 内部培训与行动手册 (终极版)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
 
@@ -17,34 +17,17 @@
             --light-text-color: #6c757d;
             --border-color: #dee2e6;
             --header-bg-color: #343a40; /* 深黑灰 */
+            --example-bg-color: #fdfefe;
+            --example-border-color: #e0e6e8;
         }
 
-        body {
-            font-family: 'Noto Sans SC', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.9;
-            margin: 0;
-            padding: 0;
-        }
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: var(--bg-color); color: var(--text-color); line-height: 1.9; margin: 0; padding: 0; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .main-header {
-            text-align: center;
-            padding: 40px 20px;
-            background-color: var(--header-bg-color);
-            color: var(--card-bg-color);
-            border-radius: 8px;
-            margin-bottom: 40px;
-        }
-
+        .main-header { text-align: center; padding: 40px 20px; background-color: var(--header-bg-color); color: var(--card-bg-color); border-radius: 8px; margin-bottom: 40px; }
         .main-header h1 { margin: 0; font-size: 2.8em; font-weight: 700; }
         .main-header p { margin: 10px 0 0; font-size: 1.3em; font-weight: 400; opacity: 0.8; }
+        .main-header .storage-note { font-size: 0.9em; opacity: 0.6; margin-top: 15px; }
 
         .section { margin-bottom: 50px; }
         .section-title { text-align: center; margin-bottom: 30px; }
@@ -55,79 +38,31 @@
         .card-title { font-size: 1.6em; font-weight: 700; color: var(--primary-color); margin-top: 0; margin-bottom: 20px; }
         
         .card ul { list-style-type: none; padding-left: 0; }
-        
-        .task-item {
-            padding-left: 0;
-            margin-bottom: 20px;
-        }
+        .task-item { padding-left: 0; margin-bottom: 20px; }
         .task-item::before { content: none; }
-
-        .task-line {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .task-line input[type="checkbox"] {
-            flex-shrink: 0;
-            width: 1.3em;
-            height: 1.3em;
-            cursor: pointer;
-        }
-
-        .task-line label {
-            flex-grow: 1;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .task-line input[type="checkbox"]:checked + label {
-            text-decoration: line-through;
-            color: var(--light-text-color);
-            opacity: 0.8;
-        }
-
-        .comment-toggle {
-            cursor: pointer;
-            font-size: 1.3em;
-            flex-shrink: 0;
-            user-select: none;
-            padding: 0 5px;
-            border-radius: 5px;
-            transition: background-color 0.2s;
-        }
-        .comment-toggle:hover {
-            background-color: #f0f0f0;
-        }
-
-        .comment-box {
-            display: none;
-            margin-top: 10px;
-            padding-left: 35px; /* Indent under the task text */
-        }
+        .task-line { display: flex; align-items: center; gap: 12px; }
+        .task-line input[type="checkbox"] { flex-shrink: 0; width: 1.3em; height: 1.3em; cursor: pointer; }
+        .task-line label { flex-grow: 1; cursor: pointer; transition: color 0.2s; }
+        .task-line input[type="checkbox"]:checked + label { text-decoration: line-through; color: var(--light-text-color); opacity: 0.8; }
+        .comment-toggle { cursor: pointer; font-size: 1.3em; flex-shrink: 0; user-select: none; padding: 0 5px; border-radius: 5px; transition: background-color 0.2s; }
+        .comment-toggle:hover { background-color: #f0f0f0; }
+        .comment-box { display: none; margin-top: 10px; padding-left: 35px; }
         .comment-box.show { display: block; }
-
-        .comment-box textarea {
-            width: 100%;
-            box-sizing: border-box;
-            min-height: 70px;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-family: 'Noto Sans SC', sans-serif;
-            font-size: 0.95em;
-            resize: vertical;
-        }
+        .comment-box textarea { width: 100%; box-sizing: border-box; min-height: 70px; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: 'Noto Sans SC', sans-serif; font-size: 0.95em; resize: vertical; }
         
         a { color: var(--secondary-color); text-decoration: none; font-weight: 500; }
         a:hover { text-decoration: underline; }
 
-        .example-box { background-color: #fdfefe; border: 1px dashed var(--border-color); padding: 20px; margin-top: 15px; border-radius: 5px; }
-        .example-box h4 { margin-top: 0; color: var(--primary-color); font-weight: 500; }
-
+        .example-box {background-color: var(--example-bg-color);border: 1px solid var(--example-border-color);padding: 20px;margin-top: 20px;border-radius: 8px;box-shadow: 0 1px 3px rgba(0,0,0,0.04);}
+        .example-box h4 { margin-top: 0; color: var(--primary-color); font-weight: 700; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .example-box-pro { border-left: 5px solid var(--secondary-color); }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid var(--border-color); padding: 12px; text-align: left; }
-        th { background-color: #f2f2f2; font-weight: 500; }
+        th, td { border: 1px solid var(--border-color); padding: 12px; text-align: left; vertical-align: top; }
+        th { background-color: #f2f2f2; font-weight: 700; }
+        
+        .email-sample {background-color: #fff;border: 1px solid #ccc;padding: 20px;font-family: 'Courier New', Courier, monospace;line-height: 1.6;}
+        .email-annotation { color: var(--accent-color); font-style: italic; }
 
         .footer { text-align: center; padding: 20px; margin-top: 40px; font-size: 0.9em; color: var(--light-text-color); }
 
@@ -143,14 +78,15 @@
 
     <div class="container">
         <header class="main-header">
-            <h1>“价值前置”求职突围战略</h1>
-            <p>内部培训手册 V3.0 (交互式版)</p>
+            <h1>内部培训与行动手册 V4.0</h1>
+            <p>—— “价值前置”求职突围战略实操指南</p>
+            <p class="storage-note">提示：您的勾选状态和评论内容会自动保存在本浏览器中，刷新不会丢失。</p>
         </header>
 
-        <!-- ==================== Part 1: 战略篇 ==================== -->
+        <!-- ==================== Part 1: 思维转变 ==================== -->
         <section class="section">
             <div class="section-title">
-                <h2>第一部分：战略篇 (The "Why")</h2>
+                <h2>第一部分：思维转变 - 为什么必须改变打法</h2>
                 <p>理解市场巨变，重塑我们的核心理念。我们不再是求职中介，而是职业生涯的“特种兵教练”。</p>
             </div>
 
@@ -159,21 +95,21 @@
                 <ul>
                     <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-1-1-1"><label for="task-1-1-1"><strong>政策收紧：</strong>2025年的移民与工作签证政策（H-1B等）是明确的筛选器，优先保护本地就业。对Sponsorship犹豫不决是企业常态。</label><span class="comment-toggle" data-target="comment-1-1-1">💬</span>
+                            <input type="checkbox" id="task-1-1-1"><label for="task-1-1-1"><strong>政策收紧：</strong>企业招聘Sponsorship的决策成本极高，优先保护本地就业。</label><span class="comment-toggle" data-target="comment-1-1-1">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-1-1-1"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-1-1-1"><textarea placeholder="记录相关政策细节或案例..."></textarea></div>
                     </li>
                     <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-1-1-2"><label for="task-1-1-2"><strong>经济收缩：</strong>企业招聘预算削减，对初级岗位的容错率极低。每个HC都要求能立即产生价值，而不是“培养潜力”。</label><span class="comment-toggle" data-target="comment-1-1-2">💬</span>
+                            <input type="checkbox" id="task-1-1-2"><label for="task-1-1-2"><strong>经济收缩：</strong>企业对初级岗位的要求从“培养潜力”变为“即刻产生价值”。</label><span class="comment-toggle" data-target="comment-1-1-2">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-1-1-2"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-1-1-2"><textarea placeholder="记录近期裁员新闻或行业报告..."></textarea></div>
                     </li>
                     <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-1-1-3"><label for="task-1-1-3"><strong>旧方法失效：</strong>“海投 + 内推”模式在供大于求的市场中已彻底破产。自动化筛选系统（ATS）会过滤掉95%无亮点的简历，弱关系内推不足以让招聘经理承担风险。</label><span class="comment-toggle" data-target="comment-1-1-3">💬</span>
+                            <input type="checkbox" id="task-1-1-3"><label for="task-1-1-3"><strong>旧方法失效：</strong>“海投 + 弱关系内推”模式在供大于求的市场中已彻底破产。</label><span class="comment-toggle" data-target="comment-1-1-3">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-1-1-3"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-1-1-3"><textarea placeholder="记录学员海投0面试的具体数据..."></textarea></div>
                     </li>
                 </ul>
             </div>
@@ -185,163 +121,187 @@
                         <div class="task-line">
                             <input type="checkbox" id="task-1-2-1"><label for="task-1-2-1"><strong>旧模式（已失效）：</strong>我有技能清单 → 请给我一个工作机会 → 我会努力工作创造价值。</label><span class="comment-toggle" data-target="comment-1-2-1">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-1-2-1"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-1-2-1"><textarea placeholder="讨论这种模式失败的根本原因..."></textarea></div>
                     </li>
                     <li class="task-item">
                         <div class="task-line">
                             <input type="checkbox" id="task-1-2-2"><label for="task-1-2-2"><strong>新模式（我们的新战略）：</strong>我发现一个你可能关心的问题 → 我主动创造了一个解决方案来证明我的价值 → 你看到价值后，购买我的服务（即提供工作）。</label><span class="comment-toggle" data-target="comment-1-2-2">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-1-2-2"><textarea placeholder="输入您的意见或建议..."></textarea></div>
-                    </li>
-                    <li class="task-item">
-                        <div class="task-line">
-                            <input type="checkbox" id="task-1-2-3"><label for="task-1-2-3"><strong>我们的新角色：</strong>指导学员完成这一转变。我们的工作不是“优化简历”，而是“孵化价值”。</p></label><span class="comment-toggle" data-target="comment-1-2-3">💬</span>
-                        </div>
-                        <div class="comment-box" id="comment-1-2-3"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-1-2-2"><textarea placeholder="这个模式对顾问和学员提出了哪些新要求？"></textarea></div>
                     </li>
                 </ul>
+                <div class="example-box example-box-pro">
+                    <h4>【顾问关键动作】理念落地</h4>
+                    <p>我们的工作核心不再是帮学生“优化简历”，而是指导他们“孵化价值”。因此，我们与学生的第一次深度会谈，就应该转变提问方式：</p>
+                    <p><strong>不要问：</strong>“你想找什么工作？”</p>
+                    <p><strong>应该问：</strong>“你对哪个行业的哪个具体问题感兴趣？我们能不能围绕它，打造一个能让企业眼前一亮的解决方案？”</p>
+                </div>
             </div>
         </section>
 
-        <!-- ==================== Part 2: 工具篇 ==================== -->
+        <!-- ==================== Part 2: 核心策略库 ==================== -->
         <section class="section">
             <div class="section-title">
-                <h2>第二部分：工具篇 (The "What")</h2>
+                <h2>第二部分：核心策略库 - 我们的三大策略</h2>
                 <p>工欲善其事，必先利其器。这是我们执行新战略所依赖的核心工具与方法论。</p>
             </div>
+
             <div class="card">
-                <h3 class="card-title">2.1 工具一：蓝海赛道数据库 (Niche Sector Database)</h3>
-                <ul>
-                    <li class="task-item">
-                        <div class="task-line">
-                            <input type="checkbox" id="task-2-1-1"><label for="task-2-1-1"><strong>目的：</strong>帮助学生避开FAANG等红海，进入竞争压力小、但人才需求迫切的垂直领域。</label><span class="comment-toggle" data-target="comment-2-1-1">💬</span>
-                        </div>
-                        <div class="comment-box" id="comment-2-1-1"><textarea placeholder="输入您的意见或建议..."></textarea></div>
-                    </li>
-                     <li class="task-item">
-                        <div class="task-line">
-                            <input type="checkbox" id="task-2-1-2"><label for="task-2-1-2"><strong>构建方法：</strong>由我们团队持续研究、填充和更新一个共享数据库（推荐使用 <a href="https://www.notion.so" target="_blank">Notion</a> 或 Google Sheets）。</label><span class="comment-toggle" data-target="comment-2-1-2">💬</span>
-                        </div>
-                        <div class="comment-box" id="comment-2-1-2"><textarea placeholder="输入您的意见或建议..."></textarea></div>
-                    </li>
-                </ul>
+                <h3 class="card-title">2.1 策略一：蓝海赛道数据库 (Niche Sector Database)</h3>
+                <p><strong>目的：</strong> 帮助学生避开大厂红海，进入竞争压力小、但人才需求迫切的垂直领域。</p>
+                <div class="example-box example-box-pro">
+                    <h4>【具体示例】数据库结构与内容</h4>
+                    <p>我们团队需要持续维护这个共享数据库，以下是包含“顾问切入点”的增强版结构：</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>垂直领域</th>
+                                <th>细分赛道</th>
+                                <th>核心问题</th>
+                                <th>代表公司</th>
+                                <th>顾问切入点 (如何指导学生)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>农业科技 (AgriTech)</td>
+                                <td>精准灌溉</td>
+                                <td>水资源浪费，作物产量不稳定</td>
+                                <td>John Deere, Trimble, Valley Irrigation</td>
+                                <td>指导学生做一个“基于无人机高光谱图像和土壤湿度传感器的智能灌溉决策系统”项目。</td>
+                            </tr>
+                            <tr>
+                                <td>法律科技 (LegalTech)</td>
+                                <td>合同自动化审查</td>
+                                <td>律师审阅合同耗时、易出错</td>
+                                <td>Ironclad, DocuSign, Kira Systems</td>
+                                <td>指导学生做一个“针对租赁合同的风险条款识别与预警”的NLP模型项目。</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            
+
             <div class="card">
-                <h3 class="card-title">2.2 工具二：王牌项目孵化器 (Capstone Project Incubator)</h3>
-                 <ul>
-                    <li class="task-item">
-                        <div class="task-line">
-                            <input type="checkbox" id="task-2-2-1"><label for="task-2-2-1"><strong>项目选题原则：</strong>必须解决一个真实或高度模拟的商业问题，而不是简单的“CRUD”或课程作业。</label><span class="comment-toggle" data-target="comment-2-2-1">💬</span>
-                        </div>
-                        <div class="comment-box" id="comment-2-2-1"><textarea placeholder="输入您的意见或建议..."></textarea></div>
-                    </li>
-                     <li class="task-item">
-                        <div class="task-line">
-                            <input type="checkbox" id="task-2-2-2"><label for="task-2-2-2"><strong>项目标准：</strong>必须包含一个可在线访问的Demo、一个专业的GitHub代码库、一份精炼的项目报告和一段1分钟的演示视频。</label><span class="comment-toggle" data-target="comment-2-2-2">💬</span>
-                        </div>
-                        <div class="comment-box" id="comment-2-2-2"><textarea placeholder="输入您的意见或建议..."></textarea></div>
-                    </li>
-                     <li class="task-item">
-                        <div class="task-line">
-                            <input type="checkbox" id="task-2-2-3"><label for="task-2-2-3"><strong>我们的角色：</strong>像产品经理一样，指导学生定义项目、拆分任务、控制进度和打磨最终成果。</label><span class="comment-toggle" data-target="comment-2-2-3">💬</span>
-                        </div>
-                        <div class="comment-box" id="comment-2-2-3"><textarea placeholder="输入您的意见或建议..."></textarea></div>
-                    </li>
-                </ul>
+                <h3 class="card-title">2.2 策略二：王牌项目孵化器 (Capstone Project Incubator)</h3>
+                <p><strong>目的：</strong> 将学生的技能转化为一个具体的、可展示的、有商业价值的“产品”。</p>
+                 <div class="example-box example-box-pro">
+                    <h4>【具体示例】从“平庸”到“王牌”的项目改造</h4>
+                    <p><strong>改造前 (平庸的项目)：</strong>“我用React和Node.js做了一个电影推荐网站。”</p>
+                    <p><strong>顾问指导后 (王牌项目)：</strong></p>
+                    <ul>
+                        <li><strong>项目名称：</strong>“MoodFlix: 一个基于用户实时面部情绪识别的流媒体电影推荐引擎。”</li>
+                        <li><strong>解决痛点：</strong>解决用户在Netflix等平台上面对海量内容时的“选择困难症”。</li>
+                        <li><strong>技术亮点：</strong>使用TensorFlow.js在浏览器端进行实时视频流情绪分析，结合协同过滤算法，实现个性化推荐。</li>
+                        <li><strong>最终交付物：</strong>
+                            <ol>
+                                <li><strong>在线Demo：</strong>一个公开的URL，打开摄像头就能立即体验。</li>
+                                <li><strong>GitHub代码库：</strong>包含清晰的README、项目结构图和部署指南。</li>
+                                <li><strong>项目报告(PDF)：</strong>阐述问题背景、技术架构、算法选择和商业价值。</li>
+                                <li><strong>1分钟演示视频：</strong>快速展示项目最酷的功能和解决的痛点。</li>
+                            </ol>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            
+
             <div class="card">
-                <h3 class="card-title">2.3 工具三：价值渗透工具包 (Value Proposition Pitch Kit)</h3>
-                 <ul>
-                    <li class="task-item">
-                        <div class="task-line">
-                            <input type="checkbox" id="task-2-3-1"><label for="task-2-3-1"><strong>核心构成：</strong>一封精心设计的“破冰邮件” + 一份1-2页的“项目价值报告” + 一个1分钟的“项目演示视频”。</label><span class="comment-toggle" data-target="comment-2-3-1">💬</span>
-                        </div>
-                        <div class="comment-box" id="comment-2-3-1"><textarea placeholder="输入您的意见或建议..."></textarea></div>
-                    </li>
-                     <li class="task-item">
-                        <div class="task-line">
-                            <input type="checkbox" id="task-2-3-2"><label for="task-2-3-2"><strong>投递对象：</strong>公司的工程经理 (Engineering Manager)、产品总监 (Director of Product) 或CTO，而不是HR。</label><span class="comment-toggle" data-target="comment-2-3-2">💬</span>
-                        </div>
-                        <div class="comment-box" id="comment-2-3-2"><textarea placeholder="输入您的意见或建议..."></textarea></div>
-                    </li>
-                     <li class="task-item">
-                        <div class="task-line">
-                            <input type="checkbox" id="task-2-3-3"><label for="task-2-3-3"><strong>邮件结构黄金法则：</strong>学习并应用Hook, Problem, Solution, Ask的四段式结构。</label><span class="comment-toggle" data-target="comment-2-3-3">💬</span>
-                        </div>
-                        <div class="comment-box" id="comment-2-3-3"><textarea placeholder="输入您的意见或建议..."></textarea></div>
-                    </li>
-                </ul>
+                <h3 class="card-title">2.3 策略三：价值渗透工具包 (Value Proposition Pitch Kit)</h3>
+                <p><strong>目的：</strong> 替代无效的简历投递，用一套组合拳直接触达决策者。</p>
+                 <div class="example-box example-box-pro">
+                    <h4>【具体示例】一封高质量的“价值渗透邮件”范文</h4>
+                    <p><strong>发件人：</strong>李华 (求职学生)<br><strong>收件人：</strong>John Smith (某电商公司工程总监)<br><strong>主题：</strong>关于提升贵公司产品页面转化率的一个小想法和原型</p>
+                    <div class="email-sample">
+                        <p>尊敬的 John Smith 先生：</p>
+                        <p class="email-annotation">[第一部分：精准的钩子，表明你做过功课]</p>
+                        <p>您好！我最近在深度使用贵公司的电商平台，并拜读了您在TechCrunch上关于“无缝用户体验”的文章，对您团队在优化购物流程上的努力印象深刻。</p>
+                        
+                        <p class="email-annotation">[第二部分：提出观察到的问题，并立刻给出你的解决方案]</p>
+                        <p>在使用过程中，我注意到当用户在产品页面犹豫不决时，缺少一个有效的激励机制来促成最终购买。为此，我利用周末时间，基于这个想法开发了一个小型的JavaScript原型：一个“智能挽留弹窗”。</p>
+                        
+                        <p class="email-annotation">[第三部分：展示价值，用链接说话，而不是空谈技能]</p>
+                        <p>当它通过用户的鼠标轨迹预测到用户可能要离开页面时，会触发一个提供限时折扣或免运费的个性化弹窗。我将它部署在了线上，您可以通过以下链接进行体验：</p>
+                        <p><strong>在线演示：</strong>[一个真实的URL链接]</p>
+                        <p><strong>1分钟视频介绍：</strong>[一个YouTube或Vimeo链接]</p>
+                        <p><strong>项目报告与代码：</strong>[一个GitHub链接]</p>
+                        
+                        <p class="email-annotation">[第四部分：低姿态、无压力的请求，核心是“寻求反馈”而非“索要工作”]</p>
+                        <p>我并非在冒昧地寻求一个职位。作为一名对电商技术充满热情的学生，我非常渴望能从您这样的行业专家那里，为我的这个小项目获得一些宝贵的反馈。不知您本周是否方便给我15分钟的时间？</p>
+                        
+                        <p>感谢您的时间！</p>
+                        <p>此致，<br>李华</p>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- ==================== Part 3: 执行篇 ==================== -->
+        <!-- ==================== Part 3: 标准作业流程 (SOP) ==================== -->
         <section class="section">
             <div class="section-title">
-                <h2>第三部分：执行篇 (The "How")</h2>
-                <p>将战略和工具落地为顾问的日常工作流程。这是我们为学员服务的标准操作程序 (SOP)。</p>
+                <h2>第三部分：标准作业流程 (SOP) - 如何一步步落地</h2>
+                <p>将战略和工具落地为顾问的日常工作流程。这是我们为学员服务的标准操作程序。</p>
             </div>
-             <div class="card">
+
+            <div class="card">
                 <h3 class="card-title">3.1 步骤一：新模式启动会 (The New Onboarding)</h3>
                 <ul>
                     <li class="task-item">
                         <div class="task-line">
                             <input type="checkbox" id="task-3-1-1"><label for="task-3-1-1"><strong>顾问主导：</strong>清晰地向学员阐述新模式的逻辑和要求，设定正确期望。</label><span class="comment-toggle" data-target="comment-3-1-1">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-1-1"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-1-1"><textarea placeholder="记录启动会话术要点..."></textarea></div>
                     </li>
                     <li class="task-item">
                         <div class="task-line">
                             <input type="checkbox" id="task-3-1-2"><label for="task-3-1-2"><strong>核心议程：</strong>完成市场数据展示、新理念介绍、目标赛道框定、布置研究任务。</label><span class="comment-toggle" data-target="comment-3-1-2">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-1-2"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-1-2"><textarea placeholder="设计一份标准化的启动会PPT..."></textarea></div>
                     </li>
                 </ul>
             </div>
             <div class="card">
                 <h3 class="card-title">3.2 步骤二：项目冲刺与管理 (Project Sprint Management)</h3>
-                <ul>
+                 <ul>
                     <li class="task-item">
                         <div class="task-line">
                             <input type="checkbox" id="task-3-2-1"><label for="task-3-2-1"><strong>顾问角色：</strong>担当项目经理(PM)和质量保证(QA)。</label><span class="comment-toggle" data-target="comment-3-2-1">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-2-1"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-2-1"><textarea placeholder="PM和QA的具体职责清单..."></textarea></div>
                     </li>
                      <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-3-2-2"><label for="task-3-2-2"><strong>每周例会：</strong>每周固定时间进行项目评审，学生演示进度，顾问提供反馈。</label><span class="comment-toggle" data-target="comment-3-2-2">💬</span>
+                            <input type="checkbox" id="task-3-2-2"><label for="task-3-2-2"><strong>每周例会：</strong>每周固定时间进行项目评审，使用Trello或Asana追踪进度。</label><span class="comment-toggle" data-target="comment-3-2-2">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-2-2"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-2-2"><textarea placeholder="制定每周例会的标准议程..."></textarea></div>
                     </li>
                      <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-3-2-3"><label for="task-3-2-3"><strong>最终验收：</strong>项目完成时，顾问需按“价值渗透工具包”的标准，对所有交付物进行严格验收。</label><span class="comment-toggle" data-target="comment-3-2-3">💬</span>
+                            <input type="checkbox" id="task-3-2-3"><label for="task-3-2-3"><strong>最终验收：</strong>项目完成时，顾问需按“王牌项目”交付物清单进行严格验收。</label><span class="comment-toggle" data-target="comment-3-2-3">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-2-3"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-2-3"><textarea placeholder="制作一份详细的验收Checklist..."></textarea></div>
                     </li>
                 </ul>
             </div>
             <div class="card">
                 <h3 class="card-title">3.3 步骤三：精准渗透战役 (Precision Outreach Campaign)</h3>
-                <ul>
+                 <ul>
                     <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-3-3-1"><label for="task-3-3-1"><strong>目标筛选：</strong>帮助学生在 <a href="https://www.linkedin.com/" target="_blank">LinkedIn</a> 上锁定10-15家目标公司的关键决策人。</label><span class="comment-toggle" data-target="comment-3-3-1">💬</span>
+                            <input type="checkbox" id="task-3-3-1"><label for="task-3-3-1"><strong>目标筛选：</strong>帮助学生在 LinkedIn 上锁定10-15家目标公司的关键决策人。</label><span class="comment-toggle" data-target="comment-3-3-1">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-3-1"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-3-1"><textarea placeholder="如何使用LinkedIn Sales Navigator找到决策人..."></textarea></div>
                     </li>
                     <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-3-3-2"><label for="task-3-3-2"><strong>材料准备与追踪：</strong>指导学生微调材料，并使用追踪表记录每次互动和跟进。</label><span class="comment-toggle" data-target="comment-3-3-2">💬</span>
+                            <input type="checkbox" id="task-3-3-2"><label for="task-3-3-2"><strong>材料准备与追踪：</strong>指导学生微调材料，并使用共享表格追踪每次互动和跟进。</label><span class="comment-toggle" data-target="comment-3-3-2">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-3-2"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-3-2"><textarea placeholder="设计追踪表格的模板..."></textarea></div>
                     </li>
                     <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-3-3-3"><label for="task-3-3-3"><strong>访谈辅导：</strong>进行专门辅导，教会学生如何在15分钟内将“信息访谈”转化为潜在的工作机会。</label><span class="comment-toggle" data-target="comment-3-3-3">💬</span>
+                            <input type="checkbox" id="task-3-3-3"><label for="task-3-3-3"><strong>访谈辅导：</strong>进行专门的模拟面试，演练如何在15分钟内将“信息访谈”转化为潜在的工作机会。</label><span class="comment-toggle" data-target="comment-3-3-3">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-3-3"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-3-3"><textarea placeholder="信息访谈中必须问的3个问题..."></textarea></div>
                     </li>
                 </ul>
             </div>
@@ -350,41 +310,41 @@
                 <ul>
                     <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-3-4-1"><label for="task-3-4-1"><strong>并行规划：</strong>从一开始，就将备选路径作为正式规划的一部分。</label><span class="comment-toggle" data-target="comment-3-4-1">💬</span>
+                            <input type="checkbox" id="task-3-4-1"><label for="task-3-4-1"><strong>并行规划：</strong>从一开始，就将备选路径作为正式规划的一部分，写入学员档案。</label><span class="comment-toggle" data-target="comment-3-4-1">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-4-1"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-4-1"><textarea placeholder="Plan B档案应包含哪些部分..."></textarea></div>
                     </li>
                     <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-3-4-2"><label for="task-3-4-2"><strong>H-1B Cap-Exempt 轨道：</strong>积极引导学生申请不受名额限制的高校和非营利研究机构的职位。</label><span class="comment-toggle" data-target="comment-3-4-2">💬</span>
+                            <input type="checkbox" id="task-3-4-2"><label for="task-3-4-2"><strong>H-1B Cap-Exempt 轨道：</strong>整理一份目标高校和非营利研究机构的清单。</label><span class="comment-toggle" data-target="comment-3-4-2">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-4-2"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-4-2"><textarea placeholder="寻找这类职位的关键词和网站..."></textarea></div>
                     </li>
                     <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-3-4-3"><label for="task-3-4-3"><strong>杰出人才评估 (O-1)：</strong>对有论文、专利、奖项的优秀学员，主动评估O-1签证的可行性。</label><span class="comment-toggle" data-target="comment-3-4-3">💬</span>
+                            <input type="checkbox" id="task-3-4-3"><label for="task-3-4-3"><strong>杰出人才评估 (O-1)：</strong>为有潜力的学员建立档案，收集证明材料。</label><span class="comment-toggle" data-target="comment-3-4-3">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-4-3"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-4-3"><textarea placeholder="O-1签证的8大标准及材料准备..."></textarea></div>
                     </li>
                     <li class="task-item">
                         <div class="task-line">
-                            <input type="checkbox" id="task-3-4-4"><label for="task-3-4-4"><strong>全球机会窗口：</strong>提供加拿大、英国、澳大利亚等主流国家的技术移民项目简介和初步评估。</label><span class="comment-toggle" data-target="comment-3-4-4">💬</span>
+                            <input type="checkbox" id="task-3-4-4"><label for="task-3-4-4"><strong>全球机会窗口：</strong>为学员提供加拿大、英国、澳洲等主流国家技术移民项目的快速评估表。</label><span class="comment-toggle" data-target="comment-3-4-4">💬</span>
                         </div>
-                        <div class="comment-box" id="comment-3-4-4"><textarea placeholder="输入您的意见或建议..."></textarea></div>
+                        <div class="comment-box" id="comment-3-4-4"><textarea placeholder="制作一个打分制的快速评估表..."></textarea></div>
                     </li>
                 </ul>
             </div>
         </section>
 
         <footer class="footer">
-            <p>&copy; 2025 [你的公司名称] | 内部核心培训资料，严禁外传</p>
+            <p>&copy; 2025 | 内部核心培训资料，严禁外传</p>
         </footer>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const taskItems = document.querySelectorAll('.task-item');
-            const storagePrefix = 'interactiveGuide_';
+            const storagePrefix = 'interactiveGuideV4_';
 
             // Function to toggle comment box
             function toggleComment(event) {
@@ -392,33 +352,46 @@
                     const targetId = event.target.getAttribute('data-target');
                     const commentBox = document.getElementById(targetId);
                     if (commentBox) {
-                        commentBox.classList.toggle('show');
+                        const isOpen = commentBox.classList.toggle('show');
+                        localStorage.setItem(storagePrefix + targetId + '_isOpen', isOpen);
                     }
                 }
             }
             
-            // Add event listener to the whole container for delegation
             const container = document.querySelector('.container');
             container.addEventListener('click', toggleComment);
 
             // Load and save data
             taskItems.forEach(item => {
                 const checkbox = item.querySelector('input[type="checkbox"]');
+                const commentBox = item.querySelector('.comment-box');
                 const textarea = item.querySelector('textarea');
+                
                 const checkboxId = checkbox.id;
-                const textareaId = textarea.parentElement.id;
+                const commentBoxId = commentBox.id;
 
-                // Load checkbox state
+                // Load state from localStorage
                 const savedCheckboxState = localStorage.getItem(storagePrefix + checkboxId);
                 if (savedCheckboxState === 'true') {
                     checkbox.checked = true;
                 }
 
-                // Load textarea content
-                const savedTextareaContent = localStorage.getItem(storagePrefix + textareaId);
+                const savedTextareaContent = localStorage.getItem(storagePrefix + commentBoxId);
                 if (savedTextareaContent) {
                     textarea.value = savedTextareaContent;
                 }
+
+                const savedTextareaHeight = localStorage.getItem(storagePrefix + commentBoxId + '_height');
+                if (savedTextareaHeight) {
+                    textarea.style.height = savedTextareaHeight;
+                }
+                
+                // Auto-open comment box if it has content
+                if (textarea.value.trim() !== '') {
+                    commentBox.classList.add('show');
+                    localStorage.setItem(storagePrefix + commentBoxId + '_isOpen', true);
+                }
+
 
                 // Save checkbox state on change
                 checkbox.addEventListener('change', () => {
@@ -427,7 +400,12 @@
 
                 // Save textarea content on input
                 textarea.addEventListener('input', () => {
-                    localStorage.setItem(storagePrefix + textareaId, textarea.value);
+                    localStorage.setItem(storagePrefix + commentBoxId, textarea.value);
+                });
+                
+                // Save textarea height on resize (mouseup is a good proxy)
+                textarea.addEventListener('mouseup', () => {
+                    localStorage.setItem(storagePrefix + commentBoxId + '_height', textarea.style.height);
                 });
             });
         });
