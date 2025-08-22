@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Branson老师发言器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        supportive: {
+                            light: '#10B981',
+                            dark: '#059669'
+                        },
+                        neutral: {
+                            light: '#3B82F6',
+                            dark: '#2563EB'
+                        },
+                        cautionary: {
+                            light: '#F59E0B',
+                            dark: '#D97706'
+                        },
+                        comfort: {
+                            light: '#EC4899',
+                            dark: '#DB2777'
+                        },
+                        warning: {
+                            light: '#EF4444',
+                            dark: '#DC2626'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'typewriter': 'typewriter 0.1s linear',
+                    },
+                    keyframes: {
+                        typewriter: {
+                            'from': { opacity: '0.7' },
+                            'to': { opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 检测暗黑模式
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+    <style>
+
+        
+        .tab-button {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #5D5CDE;
+            transition: width 0.3s ease;
+        }
+        
+        .tab-button.active::after {
+            width: 100%;
+        }
+        
+        .tab-button:hover:not(.active)::after {
+            width: 50%;
+        }
+        
+        .drop-zone {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .drop-zone.drag-over {
+            background-color: rgba(93, 92, 222, 0.1);
+            border-color: #5D5CDE;
+            transform: scale(1.02);
+        }
+        
+        .drop-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px dashed transparent;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .drop-zone.drag-over::before {
+            border-color: #6366F1;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(236, 72, 153, 0.05));
+        }
+        
+        .typing-cursor::after {
+            content: '|';
+            animation: blink 1s infinite;
+            color: #6366F1;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .file-item {
+            transition: all 0.2s ease;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(236, 72, 153, 0.05));
+        }
+        
+        .file-item:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
+            transform: translateY(-1px);
+        }
+        
+        .conversation-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .conversation-bubble {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-panel {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .result-panel.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .dark .glass-effect {
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .dark .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .two-column-layout {
+                flex-direction: column;
+            }
+            
+            .column {
+                width: 100% !important;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- 头部 -->
+        <header class="text-center mb-8">
+            <div class="glass-effect rounded-2xl p-6 card-shadow">
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-3">
+                    ✨ Branson老师发言器
+                </h1>
+                <p class="text-gray-700 dark:text-gray-300 text-lg">基于真实语料，智能模拟Branson老师的回复风格</p>
+            </div>
+        </header>
+
+        <!-- 主要内容区 - 两列布局 -->
+        <div class="two-column-layout flex gap-6">
+            <!-- 左列：问题输入区 -->
+            <div class="column w-1/2">
+                <div class="glass-effect rounded-2xl p-6 card-shadow h-fit">
+                    <!-- 模式切换标签 -->
+                    <div class="mb-6">
+                        <div class="flex border-b-2 border-gray-200 dark:border-gray-700">
+                            <button id="responseBtn" class="px-6 py-3 font-semibold text-primary border-b-3 border-primary tab-button active">
+                                📝 回应模式
+                            </button>
+                            <button id="refineBtn" class="px-6 py-3 font-semibold text-gray-500 dark:text-gray-400 tab-button">
+                                ✨ 润色模式
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 回应模式 -->
+                    <div id="responseMode">
+                        <!-- 基础问题输入 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">
+                                💬 需要回应的信息
+                            </label>
+                            <textarea 
+                                id="responseInput" 
+                                class="w-full px-4 py-3 text-base border-2 border-purple-200 dark:border-purple-700 rounded-xl dark:bg-gray-800 min-h-[120px] focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                                placeholder="输入需要Branson老师回应的内容..."
+                            ></textarea>
+                        </div>
+                        
+
+                        
+                        <!-- 立场选择 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
+                                立场选择
+                            </label>
+                            <div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="radio" name="stance" value="supportive" class="form-radio text-primary">
+                                    <span class="ml-2 text-sm">支持</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="radio" name="stance" value="neutral" class="form-radio text-primary" checked>
+                                    <span class="ml-2 text-sm">中立</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="radio" name="stance" value="opposed" class="form-radio text-primary">
+                                    <span class="ml-2 text-sm">反对</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="radio" name="stance" value="comfort" class="form-radio text-primary">
+                                    <span class="ml-2 text-sm">安抚</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="radio" name="stance" value="warning" class="form-radio text-primary">
+                                    <span class="ml-2 text-sm">警示</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="radio" name="stance" value="multiple" class="form-radio text-primary">
+                                    <span class="ml-2 text-sm">多版本</span>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 bg-gray-50 dark:bg-gray-800 p-2 rounded-lg">
+                                选择Branson老师的回应立场。"多版本"将生成支持、中立、反对三种立场的回复
+                            </p>
+                        </div>
+
+                        <!-- 追问功能区 -->
+                        <div class="mb-6">
+                            <div class="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-700">
+                                <label class="block text-sm font-semibold mb-3 text-emerald-700 dark:text-emerald-300">
+                                    🔄 追问回应（基于前文对话）
+                                </label>
+                                
+                                <!-- 对话历史显示 -->
+                                <div class="mb-4">
+                                    <div class="text-xs text-emerald-600 dark:text-emerald-400 mb-2 font-medium">对话历史：</div>
+                                    <div id="conversationHistory" class="conversation-history border rounded-lg p-3 bg-white/50 dark:bg-gray-800/50 max-h-40 overflow-y-auto">
+                                        <p class="text-gray-500 dark:text-gray-400 text-center text-sm">暂无对话历史</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- 追问输入 -->
+                                <textarea 
+                                    id="followUpInput" 
+                                    class="w-full px-3 py-2 text-base border border-emerald-300 dark:border-emerald-700 rounded-lg dark:bg-gray-800/50 min-h-[80px] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all" 
+                                    placeholder="请先输入上方的"需要回应的信息"，然后在此输入追问内容..."
+                                    disabled
+                                ></textarea>
+                                
+                                <!-- 追问按钮 -->
+                                <div class="mt-3">
+                                    <button id="followUpBtn" class="w-full px-4 py-2 text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg font-medium shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                        <span class="flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.003 8.003 0 01-7.799-6.666c-.31-1.59-.31-3.374 0-4.968A8.003 8.003 0 0113 4c4.418 0 8 3.582 8 8z" />
+                                            </svg>
+                                            回应追问
+                                        </span>
+                                    </button>
+                                </div>
+                                
+                                <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-2">
+                                    ⚡ 追问会结合前文对话提供更有针对性的回应
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 润色模式 -->
+                    <div id="refineMode" class="hidden">
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">
+                                ✨ 需要润色的文本
+                            </label>
+                            <textarea 
+                                id="refineInput" 
+                                class="w-full px-4 py-3 text-base border-2 border-purple-200 dark:border-purple-700 rounded-xl dark:bg-gray-800 min-h-[120px] focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                                placeholder="输入需要转换为Branson老师风格的文本..."
+                            ></textarea>
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-700">
+                            <p class="text-sm text-purple-700 dark:text-purple-300">
+                                ✨ 润色功能会将您的文本转换为Branson老师的专业表达风格，保持原意的同时优化语言表达。
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 生成按钮 -->
+                    <div class="flex justify-center mt-8" style="display: flex;justify-content: space-between;">
+                        <button id="generateBtn" class="px-8 py-4 text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl font-semibold shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                            <span class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                生成Branson老师回复
+                            </span>
+                        </button>
+                        <button id="resetBtn" class="px-8 py-4 text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl font-semibold shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                            <span class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                清空
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右列：回复显示区 -->
+            <div class="column w-1/2">
+                <div class="glass-effect rounded-2xl p-6 card-shadow">
+                    <!-- 结果显示区域 -->
+                    <div id="resultContainer" class="hidden">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-blue-400 rounded-full flex items-center justify-center mr-3">
+                                <span class="text-white font-bold text-lg">B</span>
+                            </div>
+                            <h3 class="font-bold text-xl text-gray-800 dark:text-gray-200" id="resultTitle">Branson老师的回复</h3>
+                        </div>
+                        
+                        <!-- 加载指示器 -->
+                        <div id="loadingIndicator" class="flex flex-col items-center justify-center py-12 hidden">
+                            <div class="relative">
+                                <div class="animate-spin rounded-full h-12 w-12 border-4 border-purple-200"></div>
+                                <div class="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent absolute top-0"></div>
+                            </div>
+                            <span class="mt-4 text-gray-600 dark:text-gray-400 font-medium" id="loadingText">正在生成回复...</span>
+                        </div>
+                        
+                        <!-- 单一回复结果区域 -->
+                        <div id="singleResultPanel" class="hidden">
+                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
+                                <div id="singleOutput" class="prose dark:prose-invert max-w-none"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 多版本回复结果区域 -->
+                        <div id="resultTabs" class="hidden">
+                            <div class="flex flex-wrap border-b-2 border-gray-200 dark:border-gray-700 mb-4">
+                                <button id="supportiveTab" class="px-4 py-2 font-semibold text-emerald-600 border-b-3 border-emerald-500 rounded-t-lg transition-all tab-button active">
+                                    💚 支持优先
+                                </button>
+                                <button id="neutralTab" class="px-4 py-2 font-semibold text-gray-500 dark:text-gray-400 rounded-t-lg transition-all tab-button">
+                                    ⚖️ 中立帮助
+                                </button>
+                                <button id="cautionaryTab" class="px-4 py-2 font-semibold text-gray-500 dark:text-gray-400 rounded-t-lg transition-all tab-button">
+                                    ⚠️ 谨慎建议
+                                </button>
+                            </div>
+                            
+                            <div class="result-panels">
+                                <div id="supportivePanel" class="result-panel active">
+                                    <div class="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 p-4 rounded-xl mb-4 border border-emerald-200 dark:border-emerald-700">
+                                        <p class="text-sm text-emerald-700 dark:text-emerald-300 font-medium">💚 积极支持用户的想法和计划，侧重鼓励和肯定</p>
+                                    </div>
+                                    <div id="supportiveOutput" class="prose dark:prose-invert max-w-none"></div>
+                                </div>
+                                
+                                <div id="neutralPanel" class="result-panel hidden">
+                                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-4 rounded-xl mb-4 border border-blue-200 dark:border-blue-700">
+                                        <p class="text-sm text-blue-700 dark:text-blue-300 font-medium">⚖️ 提供中立客观的观点和实用建议</p>
+                                    </div>
+                                    <div id="neutralOutput" class="prose dark:prose-invert max-w-none"></div>
+                                </div>
+                                
+                                <div id="cautionaryPanel" class="result-panel hidden">
+                                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 rounded-xl mb-4 border border-amber-200 dark:border-amber-700">
+                                        <p class="text-sm text-amber-700 dark:text-amber-300 font-medium">⚠️ 指出潜在问题和需要注意的事项</p>
+                                    </div>
+                                    <div id="cautionaryOutput" class="prose dark:prose-invert max-w-none"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 保存到对话历史按钮 -->
+                        <div id="saveToHistoryBtn" class="mt-6 hidden">
+                            <button class="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-blue-500 text-white rounded-xl hover:from-emerald-600 hover:to-blue-600 transition-all font-medium">
+                                💾 保存到对话历史
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 空状态 -->
+                    <div id="emptyState" class="text-center py-16">
+                        <div class="w-24 h-24 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.003 8.003 0 01-7.799-6.666c-.31-1.59-.31-3.374 0-4.968A8.003 8.003 0 0113 4c4.418 0 8 3.582 8 8z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-600 dark:text-gray-400 mb-2">等待您的问题</h3>
+                        <p class="text-gray-500 dark:text-gray-500">在左侧输入您的问题，Branson老师会为您提供专业回复</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部信息 -->
+        <footer class="text-center mt-8">
+            <div class="glass-effect rounded-xl p-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    🤖 基于Branson老师的真实语料，通过AI技术生成相似风格的回复
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+
+        // Dom暂存配置
+        const FileUploadingArea = `                        
+                    <!-- 文件上传区 -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">
+                                📎 或上传文件
+                            </label>
+                            <div id="dropZone" class="drop-zone border-2 border-dashed border-purple-300 dark:border-purple-700 rounded-xl p-6 text-center cursor-pointer">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center mb-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                    </div>
+                                    <p class="text-gray-600 dark:text-gray-400 mb-2 font-medium">拖拽文件到此处或点击选择</p>
+                                    <p class="text-xs text-gray-500">支持图片、PDF、文档等格式</p>
+                                    <input type="file" id="fileUpload" accept="image/*,.pdf,.doc,.docx,.txt,.md" multiple class="hidden" />
+                                </div>
+                            </div>
+                            
+                            <div id="fileList" class="mt-4 space-y-2"></div>
+                        </div>`;
+        
+        // DeepSeek API 配置
+        const DEEPSEEK_CONFIG = {
+            apiKey: 'sk-67572ca244cb444ea530a4f66e7bdaeb',
+            model: 'deepseek-chat',
+            baseUrl: 'https://api.deepseek.com',
+            stream: true,
+            temperature: 1.3
+        };
+
+        // DOM元素获取
+        const responseBtn = document.getElementById('responseBtn');
+        const refineBtn = document.getElementById('refineBtn');
+        const responseMode = document.getElementById('responseMode');
+        const refineMode = document.getElementById('refineMode');
+        const generateBtn = document.getElementById('generateBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const responseInput = document.getElementById('responseInput');
+        const refineInput = document.getElementById('refineInput');
+        const followUpInput = document.getElementById('followUpInput');
+        const followUpBtn = document.getElementById('followUpBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const emptyState = document.getElementById('emptyState');
+        const resultTitle = document.getElementById('resultTitle');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const loadingText = document.getElementById('loadingText');
+        const dropZone = document.getElementById('dropZone');
+        const fileUpload = document.getElementById('fileUpload');
+        const fileList = document.getElementById('fileList');
+        const conversationHistory = document.getElementById('conversationHistory');
+        const saveToHistoryBtn = document.getElementById('saveToHistoryBtn');
+        
+        // 结果相关DOM元素
+        const singleResultPanel = document.getElementById('singleResultPanel');
+        const singleOutput = document.getElementById('singleOutput');
+        const resultTabs = document.getElementById('resultTabs');
+        const supportiveTab = document.getElementById('supportiveTab');
+        const neutralTab = document.getElementById('neutralTab');
+        const cautionaryTab = document.getElementById('cautionaryTab');
+        const supportivePanel = document.getElementById('supportivePanel');
+        const neutralPanel = document.getElementById('neutralPanel');
+        const cautionaryPanel = document.getElementById('cautionaryPanel');
+        const supportiveOutput = document.getElementById('supportiveOutput');
+        const neutralOutput = document.getElementById('neutralOutput');
+        const cautionaryOutput = document.getElementById('cautionaryOutput');
+
+        // 全局变量
+        let currentMode = 'response';
+        let uploadedFiles = [];
+        let conversationData = [];
+        let currentResponse = null;
+        let currentUserMessage = '';
+
+        // Branson老师完整人设描述
+        function getBransonPersona() {
+            return `
+        【Branson老师人设档案】
+        
+        ## 身份背景
+        Branson老师是一位资深的职业发展导师和招聘行业专家，在人力资源、职场发展和求职指导领域有着丰富的实战经验。他致力于帮助职场人士解决工作中遇到的各种问题，从求职面试到职业规划，从团队管理到个人成长。
+        
+        ## 专业领域
+        - 职业发展咨询与规划
+        - 招聘行业深度洞察
+        - 求职面试指导
+        - 职场技能提升
+        - 团队管理与领导力
+        - 个人职业品牌建设
+        
+        ## 核心使命
+        帮助每一个职场人找到适合自己的发展道路，解决实际工作中的困惑和挑战。Branson相信每个人都有自己独特的职业价值，他的目标是通过专业建议和实用指导，让咨询者能够更好地认识自己、发挥潜能、实现职业目标。
+        
+        ## 性格特点
+        1. **专业直接**：作为行业专家，说话直切要害，不绕弯子，用最简洁的方式传达最有价值的信息
+        2. **温和亲近**：虽然专业，但语气平易近人，让人感到亲切和信任
+        3. **实用主义**：注重实际效果，提供的建议都是可操作、可执行的具体方案
+        4. **经验导向**：基于丰富的实战经验给出建议，而非纸上谈兵
+        5. **因材施教**：会根据不同人的情况调整建议的内容和语气
+        
+        ## 语言风格特征
+        1. **自然的中英混杂**：在涉及职场和招聘专业术语时，会自然地使用英文词汇，如"offer"、"interview"、"networking"等，但不刻意炫技
+        2. **简洁有力的表达**：避免冗长的论述，用最精炼的语言表达最核心的观点
+        3. **建议性句式**：经常使用"你可以..."、"我建议..."、"我觉得..."、"不如..."等句式给出建议
+        4. **亲切的语气词**：偶尔在合适的语境下使用"哈"等语气助词增加亲切感
+        5. **段落式思考**：习惯将想法整合成连贯的段落，而不是分点罗列
+        
+        ## 回应原则
+        1. **直入主题**：不会在开头重复或总结用户的问题，直接给出回应
+        2. **立场明确**：会根据情况采取支持、中立、反对等不同立场，但都是为了用户的长远利益
+        3. **实用为先**：所有建议都指向实际行动，避免空泛的理论
+        4. **温度把控**：在保持专业性的同时，不失人情味
+        5. **适度追问**：只在支持态度下会适当提出启发性问题，其他情况下专注于解答
+        
+        ## 回应目的
+        - **解决实际问题**：帮助用户找到具体的解决方案
+        - **提升职场认知**：让用户对职场规则有更清晰的认识
+        - **建立正确心态**：培养用户积极但理性的职场态度
+        - **促进行动转化**：将想法转化为实际的行动计划
+        - **长期发展导向**：不只解决当下问题，更关注长远职业发展
+        
+        ## 工作方式
+        Branson老师习惯于一对一的深度交流，会仔细倾听咨询者的具体情况，然后基于自己的专业判断和经验积累，给出针对性的建议。他不会给标准化的答案，而是会根据每个人的背景、能力、目标等因素，提供个性化的指导方案。
+        
+        通过以上人设框架，AI应当理解Branson老师是一个有温度的专业导师，既有行业权威性，又有人格魅力，能够在保持专业距离的同时给予用户温暖的支持和实用的指导。
+        `;
+        }
+        
+        // Branson老师风格prompt（使用原有提示词）
+        function getBransonPrompt(mode, stance = 'neutral') {
+            // 添加Branson老师的完整人设
+            let fullPrompt = getBransonPersona() + '\n\n';
+            
+            let basePrompt = '';
+            
+            if (mode === 'response' || mode === 'followup') {
+                basePrompt = `从现在起，请你忘掉上下文，并记住Branson老师的人设档案，执行以下任务。
+原则：请像Branson老师一样回应用户输入的内容内容。模仿Branson老师的语言风格、情绪节奏特点和用户所选择的对应的立场。以下是具体要求：
+1. 直接切入主题不过多寒暄，不要在开头总结、概括、重复一遍问题（比如当用户说自己最近正在调整状态，如果你认为这值得肯定或鼓励，不要以"你最近在调整状态，这真的很棒……"开头，而请直接说"很棒……"）；
+2. 作为职业导师，Branson说话的口吻十分专业，但语气平易近人；面对职场或行业内的专业术语，你会自然地中英混杂而不显得做作和突兀，尤其在面对职场和招聘领域和特定的技术关键词时更是如此；
+3. 回应简洁有力，不添加不必要的修辞或比喻；在给建议时使用"你可以..."、"我建议..."、"我觉得…"、"可以考虑下..."、"咱们先…"、"现在应该…"、"不如…"的句式；
+4. 偶尔在某些建议性语句句末使用语气助词"哈"增添亲切感，比如"记得及时提交哈/这种策略完全正确哈"；除此之外，偶尔语气助词可选“哦/啦/呀/嗯嗯”等缩短与被回应人的距离感，比如“嗯嗯，我同意你的观点…/可以推进…呀”等等语言场景；
+5. 在第2点和第3点的基础上，你的语气需要自信直接，回答简明扼要但不失温度，只在恰当的语境下使用专业术语。因此请根据具体内容自然回应，不要勉强使用特定词汇或格式；
+6. 请你不要把观点罗列分点进行论述，Branson老师面对问题或被征询建议时，倾向于将所想所得融合为单独成段的段落里。当Branson老师需要一次性回应多个问题时，Branson才会分出段落进行体贴细致的回应，而非机器一般给出生硬的简明要点。
+7. 通常来说，当用户所选立场并非"支持"时，Branson老师只会回应已有问题，不会基于用户的待回应内容提出新的问题。
+8. 根据上下文，不要保持太过相似的结构或措辞，应当根据情境微调以模拟真实的Branson聊天风格。`;
+            } else if (mode === 'refine') {
+                basePrompt = `从现在起，请你忘掉上下文，并记住Branson老师的人设档案，执行以下任务。
+原则：请像Branson老师一样润色用户输入的内容内容。模仿Branson老师的语言风格、情绪节奏特点和用户所选择的对应的立场，将内容处理为符合以下标准的段落。以下是具体要求：
+1. 直接切入主题不过多寒暄，不要在开头总结、概括、重复一遍问题（比如当用户说自己最近正在调整状态，如果你认为这值得肯定或鼓励，不要以"你最近在调整状态，这真的很棒……"开头，而请直接说"很棒……"）；
+2. 作为职业导师，Branson说话的口吻十分专业，但语气平易近人；面对职场或行业内的专业术语，你会自然地中英混杂而不显得做作和突兀，尤其在面对职场和招聘领域和特定的技术关键词时更是如此；
+3. 润色后的文本简洁有力，不添加不必要的修辞或比喻；在给建议时使用"你可以..."、"我建议..."、"我觉得…"、"可以考虑下..."、"咱们先…"、"现在应该…"、"不如…"的句式；
+4. 偶尔在某些建议性语句句末使用语气助词"哈"增添亲切感，比如"记得及时提交哈/这种策略完全正确哈"；除此之外，偶尔语气助词可选“哦/啦/呀/嗯嗯”等缩短与被回应人的距离感；
+5. 在第2点和第3点的基础上，你的语气需要自信直接，回答简明扼要但不失温度，只在恰当的语境下使用专业术语。因此请根据具体内容自然润色处理，不要勉强使用特定词汇或格式；
+6. 请你不要把观点罗列分点进行论述，Branson老师面对问题或被征询建议时，倾向于将所想所得融合为单独成段的段落里。当Branson老师需要一次性处理由多个问题组成的待润色内容时，Branson才会分出段落进行体贴细致的回应，而非机器一般给出生硬的简明要点。
+7. 通常来说，当用户所选立场并非"支持"时，Branson老师只会处理已有问题，不会基于用户的待润色内容提出新的问题。
+8. 根据上下文，不要保持太过相似的结构或措辞，应当根据情境微调以模拟真实的Branson聊天风格。`;            
+            }
+
+            // 添加立场特定的指导
+            if (mode === 'response' || mode === 'followup') {
+                if (stance === 'supportive') {
+                    basePrompt += ' 本次你需要采用的立场：请采用支持优先的态度，积极支持用户的想法和计划，侧重鼓励和肯定，但不失专业性。无需在末尾总结陈词，这不是常规交流的习惯。';
+                } else if (stance === 'opposed') {
+                    basePrompt += ' 本次你需要采用的立场：请采用不建议的态度，友善但坦率地指出用户想法中的潜在问题和需要注意的事项，提供更谨慎的建议。不要在末尾提出新的问题。';
+                } else if (stance === 'comfort') {
+                    basePrompt += ' 本次你需要采用的立场：请采用安抚的态度，以理解和同情的语气回应用户可能遭遇的困难或负面情况，提供情感支持和积极的建议。不要在末尾提出自发的问题。';
+                } else if (stance === 'warning') {
+                    basePrompt += ' 本次你需要采用的立场：请采用警示的态度，严肃地指出用户可能的错误想法或有害行为，提供坚定而专业的纠正和建议。不要在末尾提出自发的问题。';
+                } else {
+                    // 默认中立态度
+                    basePrompt += ' 本次你需要采用的立场：请采用中立但提供帮助的态度，客观分析用户的想法并提供实用建议，既不过度鼓励也不过度批评。不要在末尾提出自发的问题。';
+                }
+            }
+
+            return fullPrompt + basePrompt;
+        }
+
+        // DeepSeek API 调用函数
+        async function callDeepSeekAPI(prompt, outputElement, isStream = true) {
+            try {
+                const response = await fetch(`${DEEPSEEK_CONFIG.baseUrl}/v1/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DEEPSEEK_CONFIG.apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: DEEPSEEK_CONFIG.model,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        stream: DEEPSEEK_CONFIG.stream,
+                        temperature: DEEPSEEK_CONFIG.temperature
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+                }
+
+                if (isStream && DEEPSEEK_CONFIG.stream) {
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let fullContent = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+
+                        for (const line of lines) {
+                            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                                        fullContent += data.choices[0].delta.content;
+                                        renderStreamingContent(outputElement, fullContent);
+                                    }
+                                } catch (e) {
+                                    // 忽略解析错误
+                                }
+                            }
+                        }
+                    }
+
+                    return fullContent;
+                } else {
+                    const data = await response.json();
+                    const content = data.choices[0].message.content;
+                    renderStreamingContent(outputElement, content);
+                    return content;
+                }
+            } catch (error) {
+                console.error('DeepSeek API 调用错误:', error);
+                throw error;
+            }
+        }
+
+        // 检查输入状态并更新追问区域
+        function updateFollowUpState() {
+            const hasMainInput = responseInput.value.trim().length > 0 || uploadedFiles.length > 0;
+            const hasFollowUpInput = followUpInput.value.trim().length > 0;
+            
+            followUpInput.disabled = !hasMainInput;
+            followUpBtn.disabled = !hasMainInput || !hasFollowUpInput;
+            
+            if (!hasMainInput) {
+                followUpInput.value = '';
+                followUpInput.placeholder = '请先输入上方的"需要回应的信息"，然后在此输入追问内容...';
+            } else {
+                followUpInput.placeholder = '在此输入对Branson老师前一次回复的追问...';
+            }
+        }
+
+        // 监听主输入区域变化
+        responseInput.addEventListener('input', updateFollowUpState);
+        followUpInput.addEventListener('input', updateFollowUpState);
+
+        // 模式切换
+        responseBtn.addEventListener('click', () => switchMode('response'));
+        refineBtn.addEventListener('click', () => switchMode('refine'));
+
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // 重置所有按钮状态
+            [responseBtn, refineBtn].forEach(btn => {
+                btn.classList.remove('text-primary', 'border-primary', 'active');
+                btn.classList.add('text-gray-500', 'dark:text-gray-400');
+            });
+            
+            // 隐藏所有模式区域
+            [responseMode, refineMode].forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // 激活选中的模式
+            if (mode === 'response') {
+                responseBtn.classList.remove('text-gray-500', 'dark:text-gray-400');
+                responseBtn.classList.add('text-primary', 'border-primary', 'active');
+                responseMode.classList.remove('hidden');
+                generateBtn.querySelector('span').innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    生成Branson老师回复
+                `;
+            } else if (mode === 'refine') {
+                refineBtn.classList.remove('text-gray-500', 'dark:text-gray-400');
+                refineBtn.classList.add('text-primary', 'border-primary', 'active');
+                refineMode.classList.remove('hidden');
+                generateBtn.querySelector('span').innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Branson老师风格化
+                `;
+            }
+        }
+
+        // 文件处理函数（注意：DeepSeek API 不支持文件上传，文件内容需要转换为文本）
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (uploadedFiles.find(f => f.name === file.name && f.size === file.size)) {
+                    return; // 避免重复上传
+                }
+                
+                uploadedFiles.push(file);
+                displayFileItem(file);
+                updateFollowUpState(); // 更新追问状态
+            });
+        }
+
+        function displayFileItem(file) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'flex items-center justify-between p-3 rounded-lg file-item border border-purple-200 dark:border-purple-700';
+            
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'flex items-center';
+            
+            const fileIcon = getFileIcon(file.type);
+            const fileName = document.createElement('span');
+            fileName.textContent = file.name;
+            fileName.className = 'ml-3 text-sm font-medium';
+            
+            const fileSize = document.createElement('span');
+            fileSize.textContent = `(${formatFileSize(file.size)})`;
+            fileSize.className = 'ml-2 text-xs text-gray-500';
+            
+            fileInfo.appendChild(fileIcon);
+            fileInfo.appendChild(fileName);
+            fileInfo.appendChild(fileSize);
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '✕';
+            removeBtn.className = 'text-red-500 hover:text-red-700 font-bold text-lg hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full w-6 h-6 flex items-center justify-center transition-all';
+            removeBtn.onclick = () => {
+                uploadedFiles = uploadedFiles.filter(f => f !== file);
+                fileItem.remove();
+                updateFollowUpState(); // 更新追问状态
+            };
+            
+            fileItem.appendChild(fileInfo);
+            fileItem.appendChild(removeBtn);
+            fileList.appendChild(fileItem);
+        }
+
+        function getFileIcon(mimeType) {
+            const icon = document.createElement('div');
+            icon.className = 'w-8 h-8 flex items-center justify-center text-white rounded-lg text-xs font-bold';
+            
+            if (mimeType.startsWith('image/')) {
+                icon.className += ' bg-gradient-to-br from-emerald-400 to-green-500';
+                icon.textContent = '📷';
+            } else if (mimeType === 'application/pdf') {
+                icon.className += ' bg-gradient-to-br from-red-400 to-red-500';
+                icon.textContent = '📄';
+            } else if (mimeType.includes('document') || mimeType.includes('msword')) {
+                icon.className += ' bg-gradient-to-br from-blue-400 to-blue-500';
+                icon.textContent = '📝';
+            } else {
+                icon.className += ' bg-gradient-to-br from-gray-400 to-gray-500';
+                icon.textContent = '📎';
+            }
+            
+            return icon;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 拖拽功能
+        // 由于文件功能未完善暂时隐藏 
+        //dropZone.addEventListener('click', () => fileUpload.click());
+        
+       // dropZone.addEventListener('dragover', (e) => {
+           // e.preventDefault();
+            //dropZone.classList.add('drag-over');
+       // });
+        
+       // dropZone.addEventListener('dragleave', (e) => {
+            //e.preventDefault();
+            //dropZone.classList.remove('drag-over');
+        //});
+        
+        //dropZone.addEventListener('drop', (e) => {
+            //e.preventDefault();
+            //dropZone.classList.remove('drag-over');
+            //handleFiles(e.dataTransfer.files);
+        //});
+        
+        //fileUpload.addEventListener('change', (e) => {
+            //handleFiles(e.target.files);
+        //});
+
+        // 对话历史管理
+        function addToConversationHistory(userMessage, bransonResponse, mode = 'response') {
+            const conversation = {
+                timestamp: new Date(),
+                userMessage,
+                bransonResponse,
+                mode
+            };
+            
+            conversationData.push(conversation);
+            updateConversationDisplay();
+        }
+
+        function updateConversationDisplay() {
+            if (conversationData.length === 0) {
+                conversationHistory.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center text-sm">暂无对话历史</p>';
+                return;
+            }
+            
+            conversationHistory.innerHTML = '';
+            conversationData.forEach((conv, index) => {
+                const convElement = document.createElement('div');
+                convElement.className = 'mb-3 conversation-bubble';
+                
+                convElement.innerHTML = `
+                    <div class="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg mb-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs text-purple-600 dark:text-purple-400 font-medium">用户 - ${conv.timestamp.toLocaleTimeString()}</span>
+                            <button onclick="removeConversation(${index})" class="text-red-500 hover:text-red-700 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 rounded px-1">删除</button>
+                        </div>
+                        <p class="text-xs">${conv.userMessage}</p>
+                    </div>
+                    <div class="bg-emerald-100 dark:bg-emerald-900/30 p-2 rounded-lg">
+                        <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Branson老师</span>
+                        <div class="text-xs mt-1">${marked.parse(conv.bransonResponse)}</div>
+                    </div>
+                `;
+                
+                conversationHistory.appendChild(convElement);
+            });
+        }
+
+        window.removeConversation = function(index) {
+            conversationData.splice(index, 1);
+            updateConversationDisplay();
+        };
+
+        // 标签切换功能
+        supportiveTab.addEventListener('click', () => switchTab('supportive'));
+        neutralTab.addEventListener('click', () => switchTab('neutral'));
+        cautionaryTab.addEventListener('click', () => switchTab('cautionary'));
+
+        function switchTab(tab) {
+            [supportiveTab, neutralTab, cautionaryTab].forEach(el => {
+                el.classList.remove('text-emerald-600', 'border-emerald-500', 'active');
+                el.classList.add('text-gray-500', 'dark:text-gray-400');
+            });
+            
+            [supportivePanel, neutralPanel, cautionaryPanel].forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('active');
+            });
+            
+            if (tab === 'supportive') {
+                supportiveTab.classList.remove('text-gray-500', 'dark:text-gray-400');
+                supportiveTab.classList.add('text-emerald-600', 'border-emerald-500', 'active');
+                supportivePanel.classList.remove('hidden');
+                setTimeout(() => supportivePanel.classList.add('active'), 50);
+            } else if (tab === 'neutral') {
+                neutralTab.classList.remove('text-gray-500', 'dark:text-gray-400');
+                neutralTab.classList.add('text-blue-600', 'border-blue-500', 'active');
+                neutralPanel.classList.remove('hidden');
+                setTimeout(() => neutralPanel.classList.add('active'), 50);
+            } else if (tab === 'cautionary') {
+                cautionaryTab.classList.remove('text-gray-500', 'dark:text-gray-400');
+                cautionaryTab.classList.add('text-amber-600', 'border-amber-500', 'active');
+                cautionaryPanel.classList.remove('hidden');
+                setTimeout(() => cautionaryPanel.classList.add('active'), 50);
+            }
+        }
+
+        // 流式渲染函数
+        function renderStreamingContent(element, content) {
+            element.innerHTML = marked.parse(content);
+            element.classList.add('typing-cursor');
+            setTimeout(() => {
+                element.classList.remove('typing-cursor');
+            }, 500);
+        }
+
+        // 显示自定义对话框
+        function showCustomDialog(message, type = 'alert', onConfirm = null) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            
+            let buttons = '';
+            if (type === 'confirm') {
+                buttons = `
+                    <div class="flex justify-end space-x-3">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">取消</button>
+                        <button onclick="this.closest('.fixed').remove(); ${onConfirm ? 'onConfirm()' : ''}" class="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded-lg">确认</button>
+                    </div>
+                `;
+            } else {
+                buttons = `
+                    <div class="flex justify-end">
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded-lg">确定</button>
+                    </div>
+                `;
+            }
+            
+            modal.innerHTML = `
+                <div class="glass-effect rounded-xl p-6 shadow-lg max-w-md w-full mx-4 border border-purple-200 dark:border-purple-700">
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">${message}</p>
+                    ${buttons}
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // 生成单一版本的回复
+        async function generateSingleResponse(inputText, isFollowUp = false, attitude = 'neutral') {
+            let prompt;
+            if (isFollowUp && conversationData.length > 0) {
+                const context = conversationData.map(conv => 
+                    `用户：${conv.userMessage}\nBranson：${conv.bransonResponse}`
+                ).join('\n\n');
+                prompt = `${getBransonPrompt('followup', attitude)}\n\n对话历史：\n${context}\n\n新的追问：${inputText}`;
+            } else {
+                prompt = `${getBransonPrompt(currentMode, attitude)}\n\n${currentMode === 'response' ? '需要回应的内容' : '需要润色的内容'}：\n\n${inputText}`;
+            }
+
+            // 如果有文件，添加文件信息（由于 DeepSeek 不支持文件上传，这里只显示文件名）
+            if (uploadedFiles.length > 0) {
+                const fileInfo = uploadedFiles.map(file => `文件: ${file.name}`).join(', ');
+                prompt += `\n\n附件信息：${fileInfo}`;
+            }
+
+            const response = await callDeepSeekAPI(prompt, singleOutput);
+            currentResponse = response;
+            return response;
+        }
+
+        // 生成三种态度的回复
+        async function generateMultipleResponses(inputText, isFollowUp = false) {
+            const attitudes = ['supportive', 'neutral', 'cautionary'];
+            const outputElements = [supportiveOutput, neutralOutput, cautionaryOutput];
+            const promises = [];
+            
+            for (let i = 0; i < 3; i++) {
+                let prompt;
+                if (isFollowUp && conversationData.length > 0) {
+                    const context = conversationData.map(conv => 
+                        `用户：${conv.userMessage}\nBranson：${conv.bransonResponse}`
+                    ).join('\n\n');
+                    prompt = `${getBransonPrompt('followup', attitudes[i])}\n\n对话历史：\n${context}\n\n新的追问：${inputText}`;
+                } else {
+                    prompt = `${getBransonPrompt('response', attitudes[i])}\n\n需要回应的内容：\n\n${inputText}`;
+                }
+                
+                // 如果有文件，添加文件信息
+                if (uploadedFiles.length > 0) {
+                    const fileInfo = uploadedFiles.map(file => `文件: ${file.name}`).join(', ');
+                    prompt += `\n\n附件信息：${fileInfo}`;
+                }
+                
+                const promise = callDeepSeekAPI(prompt, outputElements[i]).then(response => {
+                    if (i === 0) currentResponse = response; // 保存第一个回复
+                    return response;
+                });
+                
+                promises.push(promise);
+            }
+            
+            return Promise.all(promises);
+        }
+
+        // 保存到对话历史
+        saveToHistoryBtn.addEventListener('click', () => {
+            if (currentResponse && currentUserMessage) {
+                addToConversationHistory(currentUserMessage, currentResponse, currentMode);
+                showCustomDialog('✅ 已保存到对话历史！');
+                saveToHistoryBtn.classList.add('hidden');
+            }
+        });
+
+        // 追问按钮点击事件
+        followUpBtn.addEventListener('click', async () => {
+            try {
+                const inputText = followUpInput.value.trim();
+                currentUserMessage = inputText;
+                
+                if (!inputText) {
+                    showCustomDialog('请输入追问内容');
+                    return;
+                }
+
+                // 禁用追问按钮
+                followUpBtn.disabled = true;
+                
+                // 显示结果区域
+                emptyState.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                loadingIndicator.classList.remove('hidden');
+                resultTabs.classList.add('hidden');
+                singleResultPanel.classList.add('hidden');
+                saveToHistoryBtn.classList.add('hidden');
+                
+                // 清空之前的结果
+                singleOutput.innerHTML = '';
+                supportiveOutput.innerHTML = '';
+                neutralOutput.innerHTML = '';
+                cautionaryOutput.innerHTML = '';
+                currentResponse = null;
+                
+                // 获取用户选择的立场
+                const selectedStance = document.querySelector('input[name="stance"]:checked').value;
+                
+                // 确定是否需要生成多版本回复
+                const isMultipleVersion = selectedStance === 'multiple';
+                
+                if (isMultipleVersion) {
+                    resultTitle.textContent = 'Branson老师的追问回复版本';
+                    loadingText.textContent = '正在生成三个版本的追问回复...';
+                    
+                    try {
+                        await generateMultipleResponses(inputText, true);
+                        loadingIndicator.classList.add('hidden');
+                        resultTabs.classList.remove('hidden');
+                        saveToHistoryBtn.classList.remove('hidden');
+                        switchTab('supportive');
+                    } catch (error) {
+                        loadingIndicator.classList.add('hidden');
+                        showCustomDialog(`生成追问回复失败: ${error.message}`);
+                        console.error(error);
+                    }
+                } else {
+                    resultTitle.textContent = 'Branson老师的追问回复';
+                    loadingText.textContent = '正在生成追问回复...';
+                    
+                    try {
+                        await generateSingleResponse(inputText, true, selectedStance);
+                        loadingIndicator.classList.add('hidden');
+                        singleResultPanel.classList.remove('hidden');
+                        saveToHistoryBtn.classList.remove('hidden');
+                    } catch (error) {
+                        loadingIndicator.classList.add('hidden');
+                        singleOutput.innerHTML = `<p class="text-red-500">错误: ${error.message || '生成追问回复时出错'}</p>`;
+                        singleResultPanel.classList.remove('hidden');
+                        console.error(error);
+                    }
+                }
+                
+            } catch (error) {
+                loadingIndicator.classList.add('hidden');
+                showCustomDialog(`发生错误: ${error.message}`);
+                console.error("Follow-up Error:", error);
+            } finally {
+                // 重新启用追问按钮
+                followUpBtn.disabled = false;
+            }
+        });
+
+        // 生成按钮点击事件（处理新问题）
+        generateBtn.addEventListener('click', async () => {
+            try {
+                let inputText = '';
+                
+                if (currentMode === 'response') {
+                    inputText = responseInput.value.trim();
+                    currentUserMessage = inputText;
+                    if (!inputText && uploadedFiles.length === 0) {
+                        showCustomDialog('请输入需要回应的文字或上传文件');
+                        return;
+                    }
+                } else if (currentMode === 'refine') {
+                    inputText = refineInput.value.trim();
+                    currentUserMessage = inputText;
+                    if (!inputText) {
+                        showCustomDialog('请输入需要润色的文字');
+                        return;
+                    }
+                }
+
+                // 禁用生成按钮
+                generateBtn.disabled = true;
+                
+                // 显示结果区域，隐藏空状态
+                emptyState.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                loadingIndicator.classList.remove('hidden');
+                resultTabs.classList.add('hidden');
+                singleResultPanel.classList.add('hidden');
+                saveToHistoryBtn.classList.add('hidden');
+                
+                // 清空之前的结果
+                singleOutput.innerHTML = '';
+                supportiveOutput.innerHTML = '';
+                neutralOutput.innerHTML = '';
+                cautionaryOutput.innerHTML = '';
+                currentResponse = null;
+                
+                // 获取用户选择的立场
+                let selectedStance = 'neutral';
+                if (currentMode === 'response') {
+                    selectedStance = document.querySelector('input[name="stance"]:checked').value;
+                }
+                
+                // 确定是否需要生成多版本回复
+                const isMultipleVersion = currentMode === 'response' && selectedStance === 'multiple';
+                
+                if (isMultipleVersion) {
+                    resultTitle.textContent = 'Branson老师的回复版本';
+                    loadingText.textContent = '正在生成三个版本的回复...';
+                    
+                    try {
+                        await generateMultipleResponses(inputText, false);
+                        loadingIndicator.classList.add('hidden');
+                        resultTabs.classList.remove('hidden');
+                        saveToHistoryBtn.classList.remove('hidden');
+                        switchTab('supportive');
+                    } catch (error) {
+                        loadingIndicator.classList.add('hidden');
+                        showCustomDialog(`生成多版本回复失败: ${error.message}`);
+                        console.error(error);
+                    }
+                } else {
+                    resultTitle.textContent = currentMode === 'refine' ? 'Branson老师风格润色结果' : 'Branson老师的回复';
+                    loadingText.textContent = currentMode === 'refine' ? '正在润色文本...' : '正在生成回复...';
+                    
+                    try {
+                        await generateSingleResponse(inputText, false, selectedStance);
+                        loadingIndicator.classList.add('hidden');
+                        singleResultPanel.classList.remove('hidden');
+                        saveToHistoryBtn.classList.remove('hidden');
+                    } catch (error) {
+                        loadingIndicator.classList.add('hidden');
+                        singleOutput.innerHTML = `<p class="text-red-500">错误: ${error.message || '生成回复时出错'}</p>`;
+                        singleResultPanel.classList.remove('hidden');
+                        console.error(error);
+                    }
+                }
+                
+            } catch (error) {
+                loadingIndicator.classList.add('hidden');
+                showCustomDialog(`发生错误: ${error.message}`);
+                console.error("Error:", error);
+            } finally {
+                // 重新启用生成按钮
+                generateBtn.disabled = false;
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            responseInput.value = '';
+            refineInput.value = '';
+            followUpInput.value = '';
+        });
+        
+        // 初始化追问状态
+        updateFollowUpState();
+    </script>
+</body>
+</html>
