@@ -386,4 +386,714 @@
     <!-- 新增/编辑客户弹窗 -->
     <div id="clientModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 class="text-xl将... (due to length limit)
+            <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200" id="modalTitle">新增客户</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">客户名称</label>
+                    <input 
+                        type="text" 
+                        id="modalClientName" 
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="输入客户名称"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">销售阶段</label>
+                    <select 
+                        id="modalClientStage" 
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    >
+                        <option value="破冰阶段">破冰阶段</option>
+                        <option value="需求探索">需求探索</option>
+                        <option value="方案展示">方案展示</option>
+                        <option value="异议处理">异议处理</option>
+                        <option value="成交阶段">成交阶段</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">产品线</label>
+                    <select 
+                        id="modalClientProduct" 
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    >
+                        <option value="海外求职">海外求职</option>
+                        <option value="国内求职">国内求职</option>
+                        <option value="留学申请">留学申请</option>
+                        <option value="职业培训">职业培训</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">客户类型</label>
+                    <div class="customer-type-selector">
+                        <div class="customer-type-option active" data-type="学员本人">
+                            👤 学员本人
+                        </div>
+                        <div class="customer-type-option" data-type="学员家长">
+                            👨‍👩‍👧 学员家长
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">客户画像（可选）</label>
+                    <textarea 
+                        id="modalClientProfile" 
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 h-24 focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+                        placeholder="输入客户背景、需求、痛点等信息..."
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button id="cancelModalBtn" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                    取消
+                </button>
+                <button id="saveClientBtn" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all">
+                    保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ 全局变量 ============
+        let clients = [];
+        let currentClientId = null;
+        let currentMode = 'reasoning';
+        let selectedModel = 'deepseek-chat';
+        let uploadedFiles = [];
+        let editingClientId = null;
+        let selectedCustomerType = '学员本人';
+
+        // ============ DOM 元素 ============
+        const sidebar = document.getElementById('sidebar');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const clientList = document.getElementById('clientList');
+        const addClientBtn = document.getElementById('addClientBtn');
+        const emptyState = document.getElementById('emptyState');
+        const workArea = document.getElementById('workArea');
+        const clientName = document.getElementById('clientName');
+        const clientInitial = document.getElementById('clientInitial');
+        const clientStage = document.getElementById('clientStage');
+        const clientProduct = document.getElementById('clientProduct');
+        const clientCustomerType = document.getElementById('clientCustomerType');
+        const editClientBtn = document.getElementById('editClientBtn');
+        const deleteClientBtn = document.getElementById('deleteClientBtn');
+        const clientModal = document.getElementById('clientModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalClientName = document.getElementById('modalClientName');
+        const modalClientStage = document.getElementById('modalClientStage');
+        const modalClientProduct = document.getElementById('modalClientProduct');
+        const modalClientProfile = document.getElementById('modalClientProfile');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+        const saveClientBtn = document.getElementById('saveClientBtn');
+        const modeBtns = document.querySelectorAll('.mode-btn');
+        const modelBtns = document.querySelectorAll('.model-btn');
+        const toggleModeInfo = document.getElementById('toggleModeInfo');
+        const modeInfo = document.getElementById('modeInfo');
+        const modeDescription = document.getElementById('modeDescription');
+        const clientInput = document.getElementById('clientInput');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputEmpty = document.getElementById('outputEmpty');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const outputContent = document.getElementById('outputContent');
+        const copyBtn = document.getElementById('copyBtn');
+        const profileContent = document.getElementById('profileContent');
+
+        // ============ 初始化 ============
+        function init() {
+            loadClients();
+            renderClientList();
+            setupEventListeners();
+            updateModeDescription();
+        }
+
+        // ============ 本地存储 ============
+        function loadClients() {
+            const saved = localStorage.getItem('salesClients');
+            if (saved) {
+                clients = JSON.parse(saved);
+            }
+        }
+
+        function saveClients() {
+            localStorage.setItem('salesClients', JSON.stringify(clients));
+        }
+
+        // ============ 客户列表渲染 ============
+        function renderClientList() {
+            if (clients.length === 0) {
+                clientList.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 py-8 text-sm">暂无客户<br>点击上方按钮添加</div>';
+                return;
+            }
+
+            clientList.innerHTML = clients.map(client => `
+                <div class="client-item p-3 rounded-lg cursor-pointer mb-2 ${client.id === currentClientId ? 'active' : ''}" data-id="${client.id}">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-indigo-400 rounded-full flex items-center justify-center text-white font-bold mr-3 text-sm">
+                            ${client.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm truncate">${client.name}</div>
+                            <div class="flex gap-1 mt-1">
+                                <span class="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">${client.stage}</span>
+                                <span class="text-xs px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded">${client.product}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // 绑定点击事件
+            document.querySelectorAll('.client-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    selectClient(item.dataset.id);
+                });
+            });
+        }
+
+        // ============ 选择客户 ============
+        function selectClient(clientId) {
+            currentClientId = clientId;
+            const client = clients.find(c => c.id === clientId);
+            
+            if (!client) return;
+
+            // 更新UI
+            emptyState.classList.add('hidden');
+            workArea.classList.remove('hidden');
+            
+            clientName.textContent = client.name;
+            clientInitial.textContent = client.name.charAt(0).toUpperCase();
+            clientStage.textContent = client.stage;
+            clientProduct.textContent = client.product;
+            clientCustomerType.textContent = client.customerType === '学员本人' ? '👤 学员本人' : '👨‍👩‍👧 学员家长';
+            
+            // 更新画像
+            if (client.profile) {
+                profileContent.innerHTML = `<p class="whitespace-pre-wrap">${client.profile}</p>`;
+            } else {
+                profileContent.innerHTML = '<p class="text-gray-500 dark:text-gray-400 italic">暂无画像,生成话术时将自动分析客户画像</p>';
+            }
+
+            // 清空输入输出
+            clientInput.value = '';
+            outputContent.innerHTML = '';
+            outputContent.classList.add('hidden');
+            outputEmpty.classList.remove('hidden');
+            copyBtn.classList.add('hidden');
+            uploadedFiles = [];
+            fileList.innerHTML = '';
+
+            // 更新列表高亮
+            renderClientList();
+
+            // 移动端关闭侧边栏
+            if (window.innerWidth < 768) {
+                sidebar.classList.remove('open');
+            }
+        }
+
+        // ============ 客户模态框 ============
+        function openClientModal(clientId = null) {
+            editingClientId = clientId;
+            
+            if (clientId) {
+                const client = clients.find(c => c.id === clientId);
+                modalTitle.textContent = '编辑客户';
+                modalClientName.value = client.name;
+                modalClientStage.value = client.stage;
+                modalClientProduct.value = client.product;
+                modalClientProfile.value = client.profile || '';
+                selectedCustomerType = client.customerType || '学员本人';
+            } else {
+                modalTitle.textContent = '新增客户';
+                modalClientName.value = '';
+                modalClientStage.value = '破冰阶段';
+                modalClientProduct.value = '海外求职';
+                modalClientProfile.value = '';
+                selectedCustomerType = '学员本人';
+            }
+
+            // 更新客户类型选择器
+            document.querySelectorAll('.customer-type-option').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.type === selectedCustomerType);
+            });
+
+            clientModal.classList.remove('hidden');
+        }
+
+        function closeClientModal() {
+            clientModal.classList.add('hidden');
+            editingClientId = null;
+        }
+
+        function saveClient() {
+            const name = modalClientName.value.trim();
+            if (!name) {
+                showAlert('请输入客户名称');
+                return;
+            }
+
+            const clientData = {
+                name,
+                stage: modalClientStage.value,
+                product: modalClientProduct.value,
+                profile: modalClientProfile.value.trim(),
+                customerType: selectedCustomerType
+            };
+
+            if (editingClientId) {
+                const client = clients.find(c => c.id === editingClientId);
+                Object.assign(client, clientData);
+            } else {
+                clientData.id = Date.now().toString();
+                clients.push(clientData);
+            }
+
+            saveClients();
+            renderClientList();
+            
+            if (editingClientId && editingClientId === currentClientId) {
+                selectClient(currentClientId);
+            } else if (!editingClientId) {
+                selectClient(clientData.id);
+            }
+
+            closeClientModal();
+        }
+
+        function deleteClient() {
+            if (!currentClientId) return;
+            
+            if (confirm('确定要删除这个客户吗？')) {
+                clients = clients.filter(c => c.id !== currentClientId);
+                saveClients();
+                
+                currentClientId = null;
+                emptyState.classList.remove('hidden');
+                workArea.classList.add('hidden');
+                
+                renderClientList();
+            }
+        }
+
+        // ============ 模式切换 ============
+        function switchMode(mode) {
+            currentMode = mode;
+            modeBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            updateModeDescription();
+        }
+
+        function switchModel(model) {
+            selectedModel = model;
+            modelBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.model === model);
+            });
+        }
+
+        function updateModeDescription() {
+            const descriptions = {
+                reasoning: `
+                    <h4 class="font-semibold mb-2">🤝 以理服人模式</h4>
+                    <p class="text-gray-700 dark:text-gray-300 mb-2">适用于理性型客户,注重逻辑分析和数据支持</p>
+                    <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1 ml-4">
+                        <li>• 提供详细的数据和案例支持</li>
+                        <li>• 强调产品的投资回报率</li>
+                        <li>• 使用逻辑推理说服客户</li>
+                    </ul>
+                `,
+                strategic: `
+                    <h4 class="font-semibold mb-2">🎯 步步为营模式</h4>
+                    <p class="text-gray-700 dark:text-gray-300 mb-2">循序渐进建立信任,适合长期客户关系维护</p>
+                    <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1 ml-4">
+                        <li>• 分阶段推进销售进程</li>
+                        <li>• 注重关系建立和信任培养</li>
+                        <li>• 提供渐进式的解决方案</li>
+                    </ul>
+                `,
+                closing: `
+                    <h4 class="font-semibold mb-2">🏆 关单在即模式</h4>
+                    <p class="text-gray-700 dark:text-gray-300 mb-2">适用于已有购买意向,需要临门一脚的客户</p>
+                    <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1 ml-4">
+                        <li>• 处理最后的顾虑和异议</li>
+                        <li>• 提供限时优惠或附加价值</li>
+                        <li>• 使用紧迫感促成交易</li>
+                    </ul>
+                `
+            };
+            modeDescription.innerHTML = descriptions[currentMode];
+        }
+
+        // ============ 文件上传 ============
+        function handleFileUpload(files) {
+            Array.from(files).forEach(file => {
+                if (file.size > 10 * 1024 * 1024) {
+                    showAlert('文件大小不能超过10MB');
+                    return;
+                }
+                uploadedFiles.push(file);
+            });
+            renderFileList();
+        }
+
+        function renderFileList() {
+            if (uploadedFiles.length === 0) {
+                fileList.innerHTML = '';
+                return;
+            }
+
+            fileList.innerHTML = uploadedFiles.map((file, index) => `
+                <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded text-xs">
+                    <span class="truncate flex-1">${file.name}</span>
+                    <button class="ml-2 text-red-500 hover:text-red-700" onclick="removeFile(${index})">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            renderFileList();
+        }
+
+        // ============ AI 话术生成 ============
+        async function generateSalesScript() {
+            const input = clientInput.value.trim();
+
+            if (!input && uploadedFiles.length === 0) {
+                showAlert('请输入客户信息或上传文件');
+                return;
+            }
+
+            if (!currentClientId) {
+                showAlert('请先选择客户');
+                return;
+            }
+
+            const client = clients.find(c => c.id === currentClientId);
+            if (!client) return;
+
+            generateBtn.disabled = true;
+            outputEmpty.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
+            outputContent.classList.add('hidden');
+            outputContent.innerHTML = '';
+            copyBtn.classList.add('hidden');
+
+            try {
+                const DEEPSEEK_API_KEY = 'sk-cc633955b577465c9f6b1d311348bc1f';
+                const DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
+
+                // 生成话术
+                const scriptPrompt = getSalesPrompt(currentMode, input, client);
+                
+                const scriptResponse = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: selectedModel,
+                        messages: [
+                            {
+                                role: "system",
+                                content: "你是一位专业的销售顾问助手。"
+                            },
+                            {
+                                role: "user",
+                                content: scriptPrompt
+                            }
+                        ],
+                        stream: true
+                    })
+                });
+
+                if (!scriptResponse.ok) {
+                    throw new Error('API调用失败');
+                }
+
+                const reader = scriptResponse.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let fullText = '';
+
+                outputContent.classList.remove('hidden');
+                loadingIndicator.classList.add('hidden');
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') continue;
+                            
+                            try {
+                                const json = JSON.parse(data);
+                                const content = json.choices[0]?.delta?.content;
+                                if (content) {
+                                    fullText += content;
+                                    outputContent.innerHTML = marked.parse(fullText);
+                                    outputContent.classList.add('typing-cursor');
+                                    outputContent.scrollTop = outputContent.scrollHeight;
+                                }
+                            } catch (e) {
+                                // 忽略解析错误
+                            }
+                        }
+                    }
+                }
+
+                outputContent.classList.remove('typing-cursor');
+                copyBtn.classList.remove('hidden');
+
+                // 并行更新画像（非流式）
+                updateClientProfile(input, client);
+
+            } catch (error) {
+                console.error('生成失败:', error);
+                showAlert('生成失败,请检查网络连接或API配置');
+                outputEmpty.classList.remove('hidden');
+                loadingIndicator.classList.add('hidden');
+            } finally {
+                generateBtn.disabled = false;
+            }
+        }
+
+        async function updateClientProfile(input, client) {
+            try {
+                const DEEPSEEK_API_KEY = 'sk-cc633955b577465c9f6b1d311348bc1f';
+                const DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
+
+                const profilePrompt = getProfilePrompt(input, client.profile, client);
+                
+                const profileResponse = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: [
+                            {
+                                role: "system",
+                                content: "你是一位专业的客户分析专家。"
+                            },
+                            {
+                                role: "user",
+                                content: profilePrompt
+                            }
+                        ],
+                        stream: false
+                    })
+                });
+
+                if (!profileResponse.ok) {
+                    throw new Error('画像更新失败');
+                }
+
+                const profileData = await profileResponse.json();
+                const newProfile = profileData.choices[0]?.message?.content?.trim();
+
+                if (newProfile) {
+                    client.profile = newProfile;
+                    saveClients();
+                    profileContent.innerHTML = `<p class="whitespace-pre-wrap">${newProfile}</p>`;
+                }
+            } catch (error) {
+                console.error('画像更新失败:', error);
+            }
+        }
+
+        function getSalesPrompt(mode, input, client) {
+            const modeInstructions = {
+                reasoning: '采用"以理服人"的方式,提供详细的数据分析、案例支持和逻辑推理',
+                strategic: '采用"步步为营"的方式,循序渐进地建立信任,分阶段推进销售进程',
+                closing: '采用"关单在即"的方式,处理最后的顾虑,提供紧迫感和附加价值'
+            };
+
+            const customerTypeContext = client.customerType === '学员家长' 
+                ? '注意:这是学员家长,需要从家长的角度考虑,强调对孩子未来发展的价值和安全保障。'
+                : '注意:这是学员本人,可以更直接地讨论个人发展和职业规划。';
+
+            return `
+你是一位专业的${client.product}销售顾问。
+
+客户信息:
+- 姓名: ${client.name}
+- 销售阶段: ${client.stage}
+- 产品线: ${client.product}
+- 客户类型: ${client.customerType}
+${client.profile ? `- 客户画像: ${client.profile}` : ''}
+
+${customerTypeContext}
+
+客户最新信息/问题:
+${input}
+
+请${modeInstructions[mode]},生成一段专业的销售话术。
+
+要求:
+1. 话术要自然、真诚、专业
+2. 针对客户的具体情况和问题
+3. 体现对客户需求的深入理解
+4. 提供具体的解决方案或建议
+5. 如果是家长客户,要特别关注家长的顾虑和期望
+6. 使用markdown格式,结构清晰
+
+请直接生成话术,不要有多余的解释。
+            `.trim();
+        }
+
+        function getProfilePrompt(input, currentProfile, client) {
+            const customerTypeNote = client.customerType === '学员家长'
+                ? '(注意这是学员家长,分析时要考虑家长的视角和关注点)'
+                : '(这是学员本人)';
+
+            return `
+基于以下信息,更新客户画像:
+
+客户基本信息:
+- 姓名: ${client.name}
+- 产品线: ${client.product}
+- 客户类型: ${client.customerType} ${customerTypeNote}
+
+${currentProfile ? `当前画像:\n${currentProfile}\n` : ''}
+
+最新客户信息:
+${input}
+
+请生成或更新客户画像,包括:
+1. 基本背景
+2. 核心需求和痛点
+3. 购买动机
+4. 可能的顾虑
+5. 沟通偏好
+${client.customerType === '学员家长' ? '6. 家长特别关注的问题(如安全、投资回报、孩子发展等)' : ''}
+
+要求简洁、准确,200字以内,使用自然语言段落,不要使用列表格式。
+            `.trim();
+        }
+
+        // ============ 复制功能 ============
+        function copyToClipboard() {
+            const text = outputContent.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('话术已复制到剪贴板', 'success');
+            }).catch(() => {
+                showAlert('复制失败,请手动复制');
+            });
+        }
+
+        // ============ 提示信息 ============
+        function showAlert(message, type = 'error') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            alertDiv.textContent = message;
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // ============ 事件监听器 ============
+        function setupEventListeners() {
+            // 移动端菜单
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+            });
+
+            // 客户管理
+            addClientBtn.addEventListener('click', () => openClientModal());
+            editClientBtn.addEventListener('click', () => openClientModal(currentClientId));
+            deleteClientBtn.addEventListener('click', deleteClient);
+            cancelModalBtn.addEventListener('click', closeClientModal);
+            saveClientBtn.addEventListener('click', saveClient);
+
+            // 客户类型选择
+            document.querySelectorAll('.customer-type-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    selectedCustomerType = option.dataset.type;
+                    document.querySelectorAll('.customer-type-option').forEach(opt => {
+                        opt.classList.toggle('active', opt === option);
+                    });
+                });
+            });
+
+            // 模式切换
+            modeBtns.forEach(btn => {
+                btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+            });
+
+            // 模型切换
+            modelBtns.forEach(btn => {
+                btn.addEventListener('click', () => switchModel(btn.dataset.model));
+            });
+
+            // 模式说明切换
+            toggleModeInfo.addEventListener('click', () => {
+                modeInfo.classList.toggle('show');
+            });
+
+            // 文件上传
+            dropZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => handleFileUpload(e.target.files));
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('drag-over');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                handleFileUpload(e.dataTransfer.files);
+            });
+
+            // 生成和复制
+            generateBtn.addEventListener('click', generateSalesScript);
+            copyBtn.addEventListener('click', copyToClipboard);
+
+            // 模态框点击外部关闭
+            clientModal.addEventListener('click', (e) => {
+                if (e.target === clientModal) {
+                    closeClientModal();
+                }
+            });
+        }
+
+        // ============ 启动应用 ============
+        init();
+
+        // 全局函数(供内联事件使用)
+        window.removeFile = removeFile;
+    </script>
+</body>
+</html>
