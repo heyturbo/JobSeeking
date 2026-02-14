@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>内容分析优化工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAFAF8;--bg2:#FFFFFF;--bg3:#F3F3F0;--bg4:#EAEAE6;
+  --tx:#1A1A18;--tx2:#4A4A46;--tx3:#7A7A76;--tx4:#A0A09C;
+  --bd:#E0E0DC;--bd2:#D0D0CC;
+  --ac:#0E7569;--ac2:#0A5C52;--ac-bg:#E6F5F3;--ac-tx:#0A5C52;
+  --red:#C53030;--red-bg:#FEE2E2;--red-tx:#991B1B;
+  --amber:#B45309;--amber-bg:#FEF3C7;--amber-tx:#92400E;
+  --green:#16A34A;--green-bg:#DCFCE7;--green-tx:#166534;
+  --blue:#2563EB;--blue-bg:#DBEAFE;--blue-tx:#1E40AF;
+  --font:'Noto Sans SC','Outfit',system-ui,sans-serif;
+  --mono:'IBM Plex Mono','Noto Sans SC',monospace;
+  --radius:8px;--radius-lg:12px;
+}
+.dark{
+  --bg:#111110;--bg2:#1C1C1A;--bg3:#252523;--bg4:#333330;
+  --tx:#EDEDEB;--tx2:#B0B0AC;--tx3:#888884;--tx4:#666662;
+  --bd:#2E2E2B;--bd2:#3A3A36;
+  --ac:#2DD4BF;--ac2:#5EEAD4;--ac-bg:#0D3D38;--ac-tx:#5EEAD4;
+  --red:#F87171;--red-bg:#450A0A;--red-tx:#FCA5A5;
+  --amber:#FBBF24;--amber-bg:#451A03;--amber-tx:#FCD34D;
+  --green:#4ADE80;--green-bg:#052E16;--green-tx:#86EFAC;
+  --blue:#60A5FA;--blue-bg:#172554;--blue-tx:#93C5FD;
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);line-height:1.6;min-height:100vh;overflow-x:hidden}
+input,textarea,button,select{font-family:var(--font);font-size:16px}
+
+.container{max-width:860px;margin:0 auto;padding:16px}
+@media(min-width:640px){.container{padding:24px 32px}}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--bd);margin-bottom:24px;gap:12px;flex-wrap:wrap}
+.header-left{display:flex;align-items:center;gap:10px}
+.logo{width:32px;height:32px;border-radius:8px;background:var(--ac);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:18px;height:18px;fill:white}
+.header-title{font-size:17px;font-weight:600;letter-spacing:-0.02em;color:var(--tx)}
+.header-sub{font-size:12px;color:var(--tx3);font-weight:400}
+
+/* Toggle Group (shared for platform + report mode) */
+.toggle-group{display:flex;background:var(--bg3);border-radius:var(--radius);padding:3px;gap:2px;flex-shrink:0}
+.toggle-btn{padding:7px 14px;border-radius:6px;border:none;background:transparent;color:var(--tx3);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap}
+.toggle-btn.active{background:var(--bg2);color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.toggle-btn:hover:not(.active){color:var(--tx2)}
+
+/* Controls Row */
+.controls-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.control-item{display:flex;align-items:center;gap:6px}
+.control-label{font-size:11px;color:var(--tx4);white-space:nowrap;letter-spacing:.02em}
+
+/* Input Section */
+.input-section{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius-lg);padding:20px;margin-bottom:24px}
+.input-label{font-size:13px;font-weight:500;color:var(--tx2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.input-label .required{color:var(--red);font-size:11px}
+
+.textarea-wrap{position:relative;margin-bottom:16px}
+.textarea-wrap textarea{width:100%;min-height:140px;padding:14px 16px;border:1px solid var(--bd);border-radius:var(--radius);background:var(--bg);color:var(--tx);font-size:15px;line-height:1.7;resize:vertical;outline:none;transition:border-color .2s}
+.textarea-wrap textarea:focus{border-color:var(--ac)}
+.textarea-wrap textarea::placeholder{color:var(--tx4)}
+.char-count{position:absolute;bottom:10px;right:12px;font-size:11px;color:var(--tx4);font-family:var(--mono);pointer-events:none}
+
+/* File Upload */
+.upload-area{border:1.5px dashed var(--bd2);border-radius:var(--radius);padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.upload-area:hover,.upload-area.drag-over{border-color:var(--ac);background:var(--ac-bg)}
+.upload-icon{width:36px;height:36px;margin:0 auto 8px;color:var(--tx4)}
+.upload-icon svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.5}
+.upload-text{font-size:13px;color:var(--tx3)}
+.upload-text strong{color:var(--tx2);font-weight:500}
+.upload-hint{font-size:11px;color:var(--tx4);margin-top:4px}
+.file-input{display:none}
+
+/* File List */
+.file-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.file-item{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg3);border-radius:6px;font-size:12px;color:var(--tx2)}
+.file-item .fname{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-item .fsize{color:var(--tx4);font-family:var(--mono);font-size:11px}
+.file-item .fremove{cursor:pointer;color:var(--tx4);transition:color .15s;padding:2px}
+.file-item .fremove:hover{color:var(--red)}
+.file-item .fremove svg{width:14px;height:14px}
+
+/* Actions */
+.actions{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.actions-left{font-size:12px;color:var(--tx4)}
+.btn-analyze{padding:10px 28px;border:none;border-radius:var(--radius);background:var(--ac);color:white;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px}
+.btn-analyze:hover:not(:disabled){background:var(--ac2)}
+.btn-analyze:disabled{opacity:.5;cursor:not-allowed}
+.btn-analyze svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+
+/* Loading */
+.loading-bar{height:2px;background:var(--bg3);border-radius:1px;overflow:hidden;margin-bottom:24px;display:none}
+.loading-bar.active{display:block}
+.loading-bar .bar{height:100%;background:var(--ac);border-radius:1px;width:0;animation:loadProgress 60s ease-out forwards}
+@keyframes loadProgress{0%{width:0}10%{width:20%}50%{width:60%}90%{width:85%}100%{width:92%}}
+.loading-bar.done .bar{width:100%;transition:width .3s}
+
+/* Results */
+.results{display:none}
+.results.show{display:block}
+
+/* Score Cards */
+.score-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+@media(min-width:640px){.score-grid{grid-template-columns:repeat(4,1fr);gap:12px}}
+.score-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius);padding:16px;text-align:center}
+.score-card .score-val{font-size:28px;font-weight:700;font-family:'Outfit',var(--font);letter-spacing:-0.03em;line-height:1.2}
+.score-card .score-label{font-size:12px;color:var(--tx3);margin-top:4px}
+.score-card.overall .score-val{color:var(--ac)}
+
+/* Risk Badge */
+.risk-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:13px;font-weight:600}
+.risk-badge.low{background:var(--green-bg);color:var(--green-tx)}
+.risk-badge.medium{background:var(--amber-bg);color:var(--amber-tx)}
+.risk-badge.high{background:var(--red-bg);color:var(--red-tx)}
+
+/* Chart Containers */
+.charts-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:20px}
+@media(min-width:640px){.charts-grid{grid-template-columns:1fr 1fr;gap:16px}}
+.chart-box{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius-lg);padding:18px}
+.chart-box .chart-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.chart-box .chart-title .dot{width:8px;height:8px;border-radius:50%;background:var(--ac);flex-shrink:0}
+.chart-canvas-wrap{position:relative;width:100%;max-width:280px;margin:0 auto}
+
+/* Structure Bars */
+.struct-bars{display:flex;flex-direction:column;gap:14px}
+.struct-bar-item .sb-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.struct-bar-item .sb-name{font-size:13px;font-weight:500;color:var(--tx2)}
+.struct-bar-item .sb-score{font-size:13px;font-weight:600;font-family:var(--mono);color:var(--tx)}
+.struct-bar-item .sb-track{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.struct-bar-item .sb-fill{height:100%;border-radius:4px;transition:width .8s ease;background:var(--ac)}
+
+/* Compliance Section */
+.compliance-section{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius-lg);padding:18px;margin-bottom:20px}
+.compliance-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.compliance-list{display:flex;flex-direction:column;gap:8px}
+.compliance-item{display:flex;gap:10px;padding:10px 12px;border-radius:var(--radius);background:var(--bg);font-size:13px;line-height:1.5}
+.compliance-item.risk-high{border-left:3px solid var(--red)}
+.compliance-item.risk-medium{border-left:3px solid var(--amber)}
+.compliance-item.risk-low{border-left:3px solid var(--green)}
+.ci-icon{flex-shrink:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px}
+.risk-high .ci-icon{background:var(--red-bg);color:var(--red-tx)}
+.risk-medium .ci-icon{background:var(--amber-bg);color:var(--amber-tx)}
+.risk-low .ci-icon{background:var(--green-bg);color:var(--green-tx)}
+.ci-body{flex:1;min-width:0}
+.ci-text{color:var(--tx2);word-break:break-word}
+.ci-text .ci-orig{text-decoration:line-through;color:var(--tx4);margin-right:4px}
+.ci-text .ci-arrow{color:var(--tx4);margin:0 4px}
+.ci-text .ci-safe{color:var(--ac-tx);font-weight:500}
+.ci-cat{font-size:11px;color:var(--tx4);margin-top:2px}
+.compliance-empty{text-align:center;color:var(--tx3);font-size:13px;padding:20px}
+
+/* Interaction Prediction */
+.interact-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:400px){.interact-grid{grid-template-columns:repeat(4,1fr)}}
+.interact-item{text-align:center;padding:12px 8px;background:var(--bg);border-radius:var(--radius)}
+.interact-item .ii-score{font-size:22px;font-weight:700;font-family:'Outfit',var(--font);letter-spacing:-0.02em;color:var(--ac)}
+.interact-item .ii-label{font-size:12px;color:var(--tx3);margin-top:2px}
+.interact-item.primary{background:var(--ac-bg);border:1px solid var(--ac)}
+.interact-item.primary .ii-label{color:var(--ac-tx);font-weight:500}
+
+/* Analysis Content (Markdown) */
+.analysis-content{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius-lg);padding:20px 22px;margin-bottom:20px}
+.analysis-content h2{font-size:16px;font-weight:600;color:var(--tx);margin:24px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--bd)}
+.analysis-content h2:first-child{margin-top:0}
+.analysis-content h3{font-size:14px;font-weight:600;color:var(--tx);margin:16px 0 8px}
+.analysis-content p{font-size:14px;color:var(--tx2);margin-bottom:10px;line-height:1.75}
+.analysis-content ul,.analysis-content ol{font-size:14px;color:var(--tx2);padding-left:20px;margin-bottom:10px}
+.analysis-content li{margin-bottom:5px;line-height:1.7}
+.analysis-content strong{color:var(--tx);font-weight:600}
+.analysis-content em{color:var(--ac-tx)}
+.analysis-content code{font-family:var(--mono);font-size:12px;background:var(--bg3);padding:2px 6px;border-radius:4px;color:var(--tx2)}
+.analysis-content blockquote{margin:12px 0;padding:10px 16px;border-left:3px solid var(--ac);background:var(--ac-bg);border-radius:0 var(--radius) var(--radius) 0;font-size:13px;color:var(--ac-tx)}
+.analysis-content table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.analysis-content table th{background:var(--bg3);font-weight:600;text-align:left;padding:8px 12px;border:1px solid var(--bd)}
+.analysis-content table td{padding:8px 12px;border:1px solid var(--bd);color:var(--tx2)}
+
+/* Type Tag */
+.type-tag{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;background:var(--ac-bg);color:var(--ac-tx);margin-bottom:16px}
+
+/* Streaming cursor */
+.streaming-cursor::after{content:'';display:inline-block;width:2px;height:14px;background:var(--ac);margin-left:2px;vertical-align:middle;animation:blink .8s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* Data Dashboard */
+.data-dashboard{display:none;margin-bottom:20px}
+.data-dashboard.show{display:block}
+.data-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+@media(min-width:480px){.data-summary-grid{grid-template-columns:repeat(5,1fr)}}
+.ds-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius);padding:12px 10px;text-align:center}
+.ds-card .ds-val{font-size:18px;font-weight:700;font-family:'Outfit',var(--font);letter-spacing:-0.02em;color:var(--tx);line-height:1.2}
+.ds-card .ds-label{font-size:11px;color:var(--tx3);margin-top:3px}
+.ds-card.ds-highlight .ds-val{color:var(--ac)}
+
+/* Data Table */
+.data-table-wrap{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px}
+.data-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
+.data-table th{background:var(--bg3);font-weight:600;color:var(--tx2);padding:10px 12px;text-align:left;border-bottom:1px solid var(--bd);position:sticky;top:0;font-size:11px;letter-spacing:.02em}
+.data-table td{padding:8px 12px;border-bottom:1px solid var(--bd);color:var(--tx2)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--bg3)}
+.data-table .num{font-family:var(--mono);text-align:right;font-size:12px}
+.data-table .title-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.data-table .rank-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;margin-right:4px}
+.rank-1{background:var(--amber-bg);color:var(--amber-tx)}
+.rank-2{background:var(--blue-bg);color:var(--blue-tx)}
+.rank-3{background:var(--green-bg);color:var(--green-tx)}
+.data-table .engagement-bar{display:inline-block;height:6px;border-radius:3px;background:var(--ac);vertical-align:middle;margin-left:6px;min-width:2px;max-width:80px}
+.data-table .type-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500;background:var(--bg3);color:var(--tx3)}
+
+/* Performance Chart */
+.perf-chart-box{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius-lg);padding:18px;margin-bottom:16px}
+.perf-chart-box .chart-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.perf-chart-canvas-wrap{position:relative;width:100%;height:260px}
+
+/* Footer */
+.footer{text-align:center;padding:20px 0;font-size:11px;color:var(--tx4);border-top:1px solid var(--bd);margin-top:32px}
+
+/* Section dividers */
+.section-label{font-size:12px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--bd)}
+
+/* Custom modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal-box{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius-lg);padding:24px;max-width:380px;width:90%;text-align:center}
+.modal-box p{font-size:14px;color:var(--tx2);margin-bottom:18px;line-height:1.6}
+.modal-box .modal-actions{display:flex;gap:10px;justify-content:center}
+.modal-box .modal-btn{padding:8px 20px;border-radius:var(--radius);border:1px solid var(--bd);background:var(--bg);color:var(--tx2);font-size:13px;cursor:pointer;font-weight:500;transition:all .15s}
+.modal-box .modal-btn.primary{background:var(--ac);color:white;border-color:var(--ac)}
+.modal-box .modal-btn:hover{opacity:.85}
+
+/* Empty state */
+.empty-state{text-align:center;padding:48px 20px;color:var(--tx3)}
+.empty-state svg{width:48px;height:48px;stroke:var(--tx4);fill:none;stroke-width:1;margin-bottom:12px}
+.empty-state p{font-size:14px}
+
+/* Tooltip */
+.tip{position:relative}
+.tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg4);color:var(--tx2);font-size:11px;padding:4px 8px;border-radius:4px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+.tip:hover::after{opacity:1}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--tx4)}
+
+/* Smooth transitions on theme change */
+body,body *{transition:background-color .15s,border-color .15s,color .15s}
+textarea{transition:border-color .2s !important}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <svg viewBox="0 0 24 24"><path d="M9 19V13h6v6m-8 2h10a2 2 0 002-2V7.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 1H5a2 2 0 00-2 2v16a2 2 0 002 2z"/></svg>
+      </div>
+      <div>
+        <div class="header-title">内容分析优化工具</div>
+        <div class="header-sub">小红书 / 视频号 · 求职赛道</div>
+      </div>
+    </div>
+    <div class="controls-row">
+      <div class="control-item">
+        <span class="control-label">平台</span>
+        <div class="toggle-group" id="platformToggle">
+          <button class="toggle-btn active" data-platform="auto" onclick="selectPlatform(this)">自动识别</button>
+          <button class="toggle-btn" data-platform="xiaohongshu" onclick="selectPlatform(this)">小红书</button>
+          <button class="toggle-btn" data-platform="shipinhao" onclick="selectPlatform(this)">视频号</button>
+        </div>
+      </div>
+      <div class="control-item">
+        <span class="control-label">报告</span>
+        <div class="toggle-group" id="reportToggle">
+          <button class="toggle-btn active" data-mode="detailed" onclick="selectReportMode(this)">详细报告</button>
+          <button class="toggle-btn" data-mode="brief" onclick="selectReportMode(this)">简明报告</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Input Section -->
+  <section class="input-section">
+    <div class="input-label">内容输入 <span class="required">输入文本或上传文件</span></div>
+    <div class="textarea-wrap">
+      <textarea id="contentInput" placeholder="粘贴你的标题、正文、文案等内容…&#10;&#10;支持输入完整帖子内容（标题、正文、标签等）&#10;也可直接上传运营数据截图进行批量分析" rows="6"></textarea>
+      <span class="char-count" id="charCount">0</span>
+    </div>
+
+    <div class="upload-area" id="uploadArea">
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div class="upload-text">拖拽文件到此处或<strong>点击上传</strong></div>
+      <div class="upload-hint">支持运营数据截图、图片、PDF、文档等任意格式，不限数量</div>
+      <input type="file" class="file-input" id="fileInput" multiple>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <div class="actions">
+      <div class="actions-left" id="inputHint">请输入内容或上传文件</div>
+      <button class="btn-analyze" id="analyzeBtn" disabled onclick="startAnalysis()">
+        开始分析
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- Loading -->
+  <div class="loading-bar" id="loadingBar"><div class="bar"></div></div>
+
+  <!-- Results -->
+  <section class="results" id="results">
+    <!-- Platform & Type -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <div class="type-tag" id="contentTypeTag">—</div>
+      <div id="platformLabel" style="font-size:12px;color:var(--tx3)"></div>
+    </div>
+
+    <!-- Score Cards -->
+    <div class="section-label">评分概览</div>
+    <div class="score-grid" id="scoreGrid">
+      <div class="score-card overall"><div class="score-val" id="scoreOverall">—</div><div class="score-label">综合评分</div></div>
+      <div class="score-card"><div class="score-val" id="scoreTitle">—</div><div class="score-label">标题质量</div></div>
+      <div class="score-card"><div class="score-val" id="scoreStructure">—</div><div class="score-label">内容结构</div></div>
+      <div class="score-card"><div class="risk-badge" id="riskBadge">—</div><div class="score-label">合规风险</div></div>
+    </div>
+
+    <!-- Data Dashboard (shown when operational data detected) -->
+    <div class="data-dashboard" id="dataDashboard">
+      <div class="section-label">运营数据概览</div>
+      <div class="data-summary-grid" id="dataSummaryGrid"></div>
+      <div class="perf-chart-box">
+        <div class="chart-title"><span class="dot"></span>各帖互动数据对比</div>
+        <div class="perf-chart-canvas-wrap"><canvas id="chartPerformance"></canvas></div>
+      </div>
+      <div class="perf-chart-box">
+        <div class="chart-title"><span class="dot"></span>互动率分布 <span style="font-weight:400;font-size:11px;color:var(--tx4)">（互动总量 / 阅读量 × 100%）</span></div>
+        <div class="perf-chart-canvas-wrap"><canvas id="chartEngagement"></canvas></div>
+      </div>
+      <div class="data-table-wrap">
+        <div style="padding:12px 16px;font-size:13px;font-weight:600;color:var(--tx);display:flex;align-items:center;gap:6px"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--ac);flex-shrink:0"></span>数据明细表</div>
+        <div class="data-table-scroll"><table class="data-table" id="dataTable"><thead></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="section-label">数据可视化</div>
+    <div class="charts-grid">
+      <!-- Content Type Radar -->
+      <div class="chart-box">
+        <div class="chart-title"><span class="dot"></span>内容类型匹配度</div>
+        <div class="chart-canvas-wrap">
+          <canvas id="chartContentType"></canvas>
+        </div>
+      </div>
+      <!-- Structure Analysis -->
+      <div class="chart-box">
+        <div class="chart-title"><span class="dot"></span>内容结构分析</div>
+        <div class="struct-bars" id="structBars">
+          <div class="struct-bar-item"><div class="sb-header"><span class="sb-name">Hook 钩子层</span><span class="sb-score" id="sbHook">—</span></div><div class="sb-track"><div class="sb-fill" id="sbHookFill" style="width:0"></div></div></div>
+          <div class="struct-bar-item"><div class="sb-header"><span class="sb-name">Value 价值层</span><span class="sb-score" id="sbValue">—</span></div><div class="sb-track"><div class="sb-fill" id="sbValueFill" style="width:0"></div></div></div>
+          <div class="struct-bar-item"><div class="sb-header"><span class="sb-name">CTA 行动层</span><span class="sb-score" id="sbCTA">—</span></div><div class="sb-track"><div class="sb-fill" id="sbCTAFill" style="width:0"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interaction Prediction -->
+    <div class="chart-box" style="margin-bottom:20px">
+      <div class="chart-title"><span class="dot"></span>互动维度预测</div>
+      <div class="interact-grid" id="interactGrid">
+        <div class="interact-item" id="interactForward"><div class="ii-score">—</div><div class="ii-label">转发潜力</div></div>
+        <div class="interact-item" id="interactSave"><div class="ii-score">—</div><div class="ii-label">收藏潜力</div></div>
+        <div class="interact-item" id="interactComment"><div class="ii-score">—</div><div class="ii-label">评论潜力</div></div>
+        <div class="interact-item" id="interactLike"><div class="ii-score">—</div><div class="ii-label">点赞潜力</div></div>
+      </div>
+    </div>
+
+    <!-- Compliance -->
+    <div class="compliance-section">
+      <div class="compliance-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        合规检查
+      </div>
+      <div class="compliance-list" id="complianceList">
+        <div class="compliance-empty">等待分析结果…</div>
+      </div>
+    </div>
+
+    <!-- Analysis Text (streaming) -->
+    <div class="section-label">详细分析报告</div>
+    <div class="analysis-content" id="analysisContent">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <p>分析中，请稍候…</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">基于知识库深度分析 · DeepSeek Reasoner · 求职内容赛道专用</footer>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <p id="modalMessage"></p>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal()">知道了</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========== Dark Mode Detection ========== */
+if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark')}
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{e.matches?document.documentElement.classList.add('dark'):document.documentElement.classList.remove('dark')});
+
+/* ========== DeepSeek API Configuration ========== */
+const DEEPSEEK_API_KEY = 'sk-b16aebec6de24163bf453f84f6da2673';
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
+const DEEPSEEK_MODEL = 'deepseek-reasoner';
+const DEEPSEEK_TEMPERATURE = 1.0;
+const DEEPSEEK_STREAM = true;
+
+/* ========== State ========== */
+let currentPlatform='auto';
+let currentReportMode='detailed';
+let uploadedFiles=[];
+let isAnalyzing=false;
+let chartInstances={};
+
+/* ========== Platform ========== */
+function selectPlatform(btn){
+  btn.parentElement.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPlatform=btn.dataset.platform;
+}
+
+/* ========== Report Mode ========== */
+function selectReportMode(btn){
+  btn.parentElement.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentReportMode=btn.dataset.mode;
+}
+
+/* ========== File Upload ========== */
+const uploadArea=document.getElementById('uploadArea');
+const fileInput=document.getElementById('fileInput');
+const fileList=document.getElementById('fileList');
+
+uploadArea.addEventListener('click',()=>fileInput.click());
+uploadArea.addEventListener('dragover',e=>{e.preventDefault();uploadArea.classList.add('drag-over')});
+uploadArea.addEventListener('dragleave',()=>uploadArea.classList.remove('drag-over'));
+uploadArea.addEventListener('drop',e=>{
+  e.preventDefault();uploadArea.classList.remove('drag-over');
+  addFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change',()=>{addFiles(fileInput.files);fileInput.value=''});
+
+function addFiles(files){
+  for(const f of files){uploadedFiles.push(f)}
+  renderFileList();updateInputState();
+}
+
+function removeFile(idx){
+  uploadedFiles.splice(idx,1);
+  renderFileList();updateInputState();
+}
+
+function renderFileList(){
+  fileList.innerHTML='';
+  uploadedFiles.forEach((f,i)=>{
+    const div=document.createElement('div');
+    div.className='file-item';
+    const sizeStr=f.size<1024?f.size+'B':f.size<1048576?(f.size/1024).toFixed(1)+'KB':(f.size/1048576).toFixed(1)+'MB';
+    div.innerHTML=`<span class="fname">${escHtml(f.name)}</span><span class="fsize">${sizeStr}</span><span class="fremove" onclick="removeFile(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>`;
+    fileList.appendChild(div);
+  });
+}
+
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+/* ========== Input State ========== */
+const contentInput=document.getElementById('contentInput');
+const charCount=document.getElementById('charCount');
+const analyzeBtn=document.getElementById('analyzeBtn');
+const inputHint=document.getElementById('inputHint');
+
+contentInput.addEventListener('input',()=>{charCount.textContent=contentInput.value.length;updateInputState()});
+
+function updateInputState(){
+  const hasText=contentInput.value.trim().length>0;
+  const hasFiles=uploadedFiles.length>0;
+  analyzeBtn.disabled=(!hasText&&!hasFiles)||isAnalyzing;
+  if(hasText&&hasFiles) inputHint.textContent=`已输入 ${contentInput.value.length} 字 + ${uploadedFiles.length} 个文件`;
+  else if(hasText) inputHint.textContent=`已输入 ${contentInput.value.length} 字`;
+  else if(hasFiles) inputHint.textContent=`已上传 ${uploadedFiles.length} 个文件`;
+  else inputHint.textContent='请输入内容或上传文件';
+}
+
+/* ========== Modal ========== */
+function showModal(msg){
+  document.getElementById('modalMessage').textContent=msg;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show')}
+
+/* ========== Chart Colors ========== */
+function getChartColors(){
+  const isDark=document.documentElement.classList.contains('dark');
+  return{
+    ac:isDark?'#2DD4BF':'#0E7569',
+    acAlpha:isDark?'rgba(45,212,191,.15)':'rgba(14,117,105,.1)',
+    grid:isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)',
+    text:isDark?'#B0B0AC':'#4A4A46',
+    bg2:isDark?'#1C1C1A':'#FFFFFF'
+  };
+}
+
+/* ========== Render Charts ========== */
+function renderContentTypeChart(data){
+  const ctx=document.getElementById('chartContentType').getContext('2d');
+  if(chartInstances.contentType) chartInstances.contentType.destroy();
+  const c=getChartColors();
+  chartInstances.contentType=new Chart(ctx,{
+    type:'radar',
+    data:{
+      labels:['热点直击','干货信息','工具介绍','Offer晒单','情绪话题'],
+      datasets:[{
+        data:[data['热点直击']||0,data['干货信息']||0,data['工具介绍']||0,data['Offer晒单']||0,data['情绪话题']||0],
+        backgroundColor:c.acAlpha,
+        borderColor:c.ac,
+        borderWidth:2,
+        pointBackgroundColor:c.ac,
+        pointBorderColor:c.bg2,
+        pointBorderWidth:2,
+        pointRadius:4
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:true,
+      plugins:{legend:{display:false}},
+      scales:{
+        r:{
+          beginAtZero:true,max:100,
+          ticks:{stepSize:25,font:{size:10,family:'IBM Plex Mono'},color:c.text,backdropColor:'transparent'},
+          grid:{color:c.grid},
+          angleLines:{color:c.grid},
+          pointLabels:{font:{size:11,family:'Noto Sans SC'},color:c.text}
+        }
+      }
+    }
+  });
+}
+
+function renderStructureBars(hook,value,cta){
+  document.getElementById('sbHook').textContent=hook;
+  document.getElementById('sbValue').textContent=value;
+  document.getElementById('sbCTA').textContent=cta;
+  requestAnimationFrame(()=>{
+    document.getElementById('sbHookFill').style.width=hook+'%';
+    document.getElementById('sbValueFill').style.width=value+'%';
+    document.getElementById('sbCTAFill').style.width=cta+'%';
+  });
+}
+
+function renderInteraction(data){
+  const items=['Forward','Save','Comment','Like'];
+  const keys=['转发','收藏','评论','点赞'];
+  const primary=data.primary||'';
+  items.forEach((item,i)=>{
+    const el=document.getElementById('interact'+item);
+    const val=data[keys[i]]||0;
+    el.querySelector('.ii-score').textContent=val;
+    if(keys[i]===primary){el.classList.add('primary')}else{el.classList.remove('primary')}
+  });
+}
+
+function renderCompliance(issues){
+  const list=document.getElementById('complianceList');
+  if(!issues||issues.length===0){
+    list.innerHTML='<div class="compliance-empty" style="color:var(--green)">✓ 未检测到明显合规风险，内容表达规范</div>';
+    return;
+  }
+  list.innerHTML='';
+  issues.forEach(item=>{
+    const riskClass=item.risk==='high'?'risk-high':item.risk==='medium'?'risk-medium':'risk-low';
+    const icon=item.risk==='high'?'✕':item.risk==='medium'?'!':'~';
+    const div=document.createElement('div');
+    div.className='compliance-item '+riskClass;
+    div.innerHTML=`<div class="ci-icon">${icon}</div><div class="ci-body"><div class="ci-text"><span class="ci-orig">${escHtml(item.text||'')}</span><span class="ci-arrow">→</span><span class="ci-safe">${escHtml(item.suggestion||'')}</span></div><div class="ci-cat">${escHtml(item.category||'')} · ${item.risk==='high'?'高风险':item.risk==='medium'?'中风险':'低风险'}</div></div>`;
+    list.appendChild(div);
+  });
+}
+
+function renderScores(data){
+  document.getElementById('scoreOverall').textContent=data.overallScore||'—';
+  document.getElementById('scoreTitle').textContent=data.titleScore||'—';
+  const sAvg=data.structureAnalysis?Math.round((data.structureAnalysis.hookScore+data.structureAnalysis.valueScore+data.structureAnalysis.ctaScore)/3):'—';
+  document.getElementById('scoreStructure').textContent=sAvg;
+  const riskMap={low:'低风险',medium:'中风险',high:'高风险'};
+  const riskEl=document.getElementById('riskBadge');
+  const riskLevel=data.complianceCheck?.overallRisk||'low';
+  riskEl.textContent=riskMap[riskLevel]||'—';
+  riskEl.className='risk-badge '+riskLevel;
+}
+
+function renderTypeTag(data){
+  const tag=document.getElementById('contentTypeTag');
+  tag.textContent=data.contentType?.primary||'内容分析';
+  const pLabel=document.getElementById('platformLabel');
+  const detected=data.detectedPlatform||'';
+  if(currentPlatform==='auto'&&detected){
+    const nameMap={xiaohongshu:'小红书',shipinhao:'视频号',unknown:'未知平台'};
+    pLabel.textContent=(nameMap[detected]||detected)+'（自动识别）';
+  }else if(currentPlatform==='auto'){
+    pLabel.textContent='自动识别平台';
+  }else{
+    pLabel.textContent=currentPlatform==='xiaohongshu'?'小红书平台分析':'视频号平台分析';
+  }
+}
+
+/* ========== System Prompt (Full Knowledge Base) ========== */
+function buildSystemPrompt(){
+  const isAuto=currentPlatform==='auto';
+  const platformName=isAuto?'小红书/视频号':currentPlatform==='xiaohongshu'?'小红书':'视频号';
+
+  const autoDetectBlock=isAuto?`
+## 重要：平台自动识别
+
+用户选择了「自动识别」模式。你需要根据上传内容的特征自动判断所属平台：
+- 小红书特征：笔记、图文、小红书水印、"赞藏评"等字样、笔记链接
+- 视频号特征：视频号、播放量、微信生态、短视频
+- 如果截图/文件中有明确的平台标识，直接识别
+- 如果无法确定，默认按小红书分析并在报告中说明
+
+在JSON输出中必须填写 "detectedPlatform" 字段为 "xiaohongshu" 或 "shipinhao"。
+`:`
+在JSON输出中 "detectedPlatform" 设为 "${currentPlatform}"。
+`;
+
+  const isBrief=currentReportMode==='brief';
+  const reportModeBlock=isBrief?`
+## 报告模式：简明报告
+
+用户选择了「简明报告」模式。Markdown分析部分必须严格遵守以下格式，总字数不超过600字：
+
+**「总」** 一段话概括整体表现、核心优势和最大问题（100~150字）
+
+**「分」** 分3~5个要点展开，每个要点一句话点明问题+一句话给出建议。使用加粗关键词开头。重点覆盖：标题优化、合规风险、互动提升方向。（300~350字）
+
+**「总」** 一段话总结优先行动项，给出1~3个最值得立刻执行的改进建议（100~150字）
+
+不要输出多个二级标题章节，不要输出长篇分析。简洁、直给、可执行。
+`:`
+## 报告模式：详细报告
+
+输出完整的多章节深度分析报告（见下方章节要求）。
+`;
+
+  return `你是一位专业的${platformName}内容分析与优化专家，专注于求职赛道。你需要基于以下完整知识库对用户提供的内容进行深度分析。
+${autoDetectBlock}${reportModeBlock}
+## 重要：运营数据表格识别
+
+用户上传的截图/文件可能包含运营数据表格。表格列顺序为：
+**日期 | 运营 | 账号名 | 账号类型 | 链接 | 封面图 | 标题 | 内容类型 | 发布时间 | 阅读或播放 | 点赞数 | 转发数 | 收藏数 | 评论数 | 私信或引流**
+
+当你识别到这类运营数据表格时：
+1. 必须准确提取每一行数据（日期、标题、各项互动数字等）
+2. 在JSON中填充 "operationalData" 字段（见下方格式）
+3. 在分析报告中增加 **数据驱动分析** 章节，包含：
+   - 各帖表现排名及原因分析（结合知识库中的内容类型、标题公式、互动指标理论）
+   - 互动率计算：(点赞+转发+收藏+评论) / 阅读量 × 100%
+   - 表现最好和最差的内容对比，用知识库框架解释差异
+   - 内容类型分布与互动效果的关联
+   - 发布时间规律分析
+   - 引流/私信数据的转化效率分析
+4. 对表格中每条内容的标题逐一做合规扫描和优化建议
+5. 如果有封面图描述，给出封面优化方向
+
+如果没有运营数据表格，"operationalData" 设为 null。
+
+## 输出格式要求（严格遵守）
+
+你的输出必须分为两个部分：
+1. 首先输出一个JSON代码块（用\`\`\`json ... \`\`\`包裹），包含结构化的评分数据
+2. 然后输出详细的Markdown分析报告
+
+JSON数据结构如下：
+\`\`\`json
+{
+  "overallScore": 0到100的整数,
+  "contentType": {
+    "primary": "热点直击|干货信息|工具介绍|Offer晒单|情绪话题 中最匹配的一个",
+    "scores": {"热点直击":0-100,"干货信息":0-100,"工具介绍":0-100,"Offer晒单":0-100,"情绪话题":0-100}
+  },
+  "titleScore": 0到100的整数,
+  "structureAnalysis": {
+    "hookScore": 0到100,
+    "valueScore": 0到100,
+    "ctaScore": 0到100
+  },
+  "complianceCheck": {
+    "overallRisk": "low|medium|high",
+    "issues": [
+      {"text":"原始违规文本","category":"违禁类别名","risk":"low|medium|high","suggestion":"安全替代写法"}
+    ]
+  },
+  "interactionPrediction": {
+    "转发": 0到100,
+    "收藏": 0到100,
+    "评论": 0到100,
+    "点赞": 0到100,
+    "primary": "最强互动维度名称"
+  },
+  "platformFit": 0到100,
+  "detectedPlatform": "xiaohongshu 或 shipinhao",
+  "operationalData": null 或 {
+    "posts": [
+      {
+        "date": "日期字符串",
+        "operator": "运营人",
+        "account": "账号名",
+        "accountType": "账号类型",
+        "title": "标题文本",
+        "contentType": "内容类型",
+        "publishTime": "发布时间",
+        "reads": 数字,
+        "likes": 数字,
+        "forwards": 数字,
+        "saves": 数字,
+        "comments": 数字,
+        "leads": 数字或0
+      }
+    ],
+    "summary": {
+      "totalPosts": 总帖数,
+      "totalReads": 总阅读量,
+      "avgReads": 平均阅读量,
+      "totalLikes": 总点赞,
+      "totalForwards": 总转发,
+      "totalSaves": 总收藏,
+      "totalComments": 总评论,
+      "avgEngagementRate": 平均互动率(百分比数字如3.5),
+      "bestPostIndex": 表现最好的帖子在posts数组中的索引,
+      "worstPostIndex": 表现最差的帖子在posts数组中的索引
+    }
+  }
+}
+\`\`\`
+
+## 完整知识库
+
+### 一、五大内容类型与互动指标对应关系
+
+| 内容类型 | 核心价值 | 最强互动维度 | 背后的用户心理 |
+|---------|---------|------------|-------------|
+| 热点直击 | 时效性+紧迫感 | 转发（极强） | 「错过就来不及了」的FOMO焦虑 |
+| 干货信息 | 系统性+实用性 | 收藏（极强） | 「先存着以后看」的囤积安全感 |
+| 工具介绍 | 效率提升+即学即用 | 收藏+评论 | 「马上能用到」的实操冲动 |
+| Offer晒单 | 真实背书+方法论 | 评论+点赞 | 「我也想做到」的向往与求教 |
+| 情绪话题 | 共鸣+讨论空间 | 评论（极强）+转发 | 「我也有话要说」的参与欲望 |
+
+核心原则：想要广泛传播做热点直击；想沉淀高粘性用户做干货和工具；想社区氛围活跃做晒单和话题。同一条内容试图同时达成所有目标会导致每个方向都不够尖锐。
+
+### 二、封面设计四种高效范式
+
+1. **信息密度型**：大量文字铺满封面，高饱和色块背景。高对比纯色底（红/蓝/黄）+大号标题+3~5条要点罗列。触发收藏冲动。
+2. **品牌Logo锚定型**：知名企业Logo大面积居中，背景留白或纯色，仅保留岗位名+一句话价值点。降低用户判断成本。
+3. **数字冲击型**：醒目数字（年份、数量、排名、薪资）作为绝对主角，数字字号≥标题的1.5倍。制造具象获得感。
+4. **真实场景型**：聊天截图、Offer邮件截图、真实工位照片等素材，传递「这是真事」的信号。激发信任感。
+
+设计原则：手机端缩略图尺寸下仍可读；信息锚点控制在5个以内；让用户在0.3秒内理解「这条内容跟我有关，值得点开」。
+
+### 三、标题工程学：四组高复用标题公式
+
+**公式A·资源整合型**：[年份/时间]+[目标人群或岗位]+[资源类型]+[价值暗示词]
+示例：「2026春招｜DA/DS求职者必收的7大面试题库」
+
+**公式B·时效紧迫型**：[月份]+[行动词]+[目标机构类型]+[紧迫感尾缀]
+示例：「二月央国企春招正式开启，别再等了」
+
+**公式C·人设叙事型**：[企业名]+[岗位]+[经历关键词]+[情绪或结果]
+示例：「从拒信到Meta DS Offer：我做对了这3件事」
+
+**公式D·工具交付型**：[知名品牌]+[具体产出物]+[完整性修饰词]
+示例：「Spotify DA面试｜超全SQL题+答案整理」
+
+**高频关键词库**：
+- 紧迫感：春招、二月、现在、马上、别错过、最后机会、正式开启
+- 完整感：超全、合辑、汇总、大全、一份搞定、全攻略
+- 目标感：DA、DS、SDE、央国企、大厂、互联网、Quant
+- 价值感：cheatsheet、时间线、面经、题库、模板、路线图
+- 信任感：亲测、已拿offer、在职分享、真实经历、一手信息
+
+### 四、内容三层结构模型（Hook→Value→CTA）
+
+**Layer 1 - Hook钩子层**（首屏/前3秒）：制造停留理由。手法：痛点提问、数字冲击、身份锚定。
+**Layer 2 - Value价值层**（核心内容区）：兑现标题承诺。
+- 热点直击→日期→事件→建议三列对照图表
+- 干货信息→总览→分类→每类TOP→获取途径
+- 工具介绍→Before/After+截图实操步骤
+- Offer晒单→时间线叙事+可复制的经验要点
+- 情绪话题→短段落叙述+结尾抛出讨论引导
+
+**Layer 3 - CTA行动层**（尾部引导区）：将浏览转化为互动。手法：「收藏备用」「评论区见」「转给朋友」
+
+### 五、用户心理四层模型
+
+1. 生存信息层：「我不能错过」→招聘动态满足刚需→转发扩散
+2. 安全掌控层：「我有准备」→干货清单对冲焦虑→收藏
+3. 社交归属层：「我不孤独」→话题讨论制造陪伴感→评论互动
+4. 自我实现层：「我也可以」→Offer晒单激发向往→点赞+评论求教
+
+深层洞察：
+- 收藏的本质是对未来焦虑的对冲，干货内容设计目标不是让人读完而是让人「觉得收藏了就安心」
+- 转发的本质是社交货币铸造，时效性强、「别人可能不知道」的内容转发价值最高
+- 评论的本质是在不确定中寻求确认，内容中刻意留下「可讨论的空间」能激发更多评论
+
+### 六、平台特性对比
+
+**小红书平台特性**：
+- 流量入口：搜索驱动为主+推荐辅助
+- 内容形态：多图图文为主力，信息密度高
+- 核心互动：收藏>点赞>评论
+- 标题策略：SEO关键词前置（争搜索排名）
+- 封面策略：信息密度型/品牌锚定型
+- 最佳适配：干货信息、工具介绍、资源合辑
+- 变现路径：收藏→私域→付费课程/社群
+- 策略建议：做「可检索、可收藏」的长尾内容资产，持续积累搜索流量。标题必须包含搜索关键词。
+
+**视频号平台特性**：
+- 流量入口：社交推荐为主（朋友点赞/转发）
+- 内容形态：短视频/口播/直播
+- 核心互动：转发>点赞>评论
+- 标题策略：情绪/悬念前置（争推荐点击）
+- 封面策略：人物出镜+大字情绪标题
+- 最佳适配：热点话题、人设故事、直播答疑
+- 变现路径：转发扩散→直播→即时转化
+- 策略建议：做「可共情、可传播」的社交内容，利用微信生态的关系链快速起量。标题注重情绪触发和社交传播性。
+
+${isAuto?'请根据自动识别的平台选择对应的平台特性进行分析。两套平台知识都已提供，你需要判断后选用正确的一套。':'请重点使用'+platformName+'的平台特性进行分析。'}
+
+### 七、违禁词七大类与合规规则（完整）
+
+#### 1. 极限用语（最高频踩雷区）
+| 违禁词 | 风险 | 安全替代 |
+|-------|-----|---------|
+| 最好/第一/最高级 | 中风险 | 「公认优质」「头部」 |
+| 唯一 | 高风险 | 「少数…之一」 |
+| 顶级/顶尖 | 中风险 | 「头部」「一线」 |
+| 首个/首家 | 中风险 | 「较早」 |
+| 独家 | 中风险 | 「自己整理」「原创整理」 |
+| 最新/最全 | 低风险 | 「超全」「本周更新」 |
+
+关键变量不是词本身，而是账号是否被标记为商业账号。商业账号使用同样的词被触发审核概率显著上升。
+
+#### 2. 权威性词语
+- 「国家推荐」→改为「政策重点支持的方向」
+- 「官方认证」→具体描述合作关系
+- 「内部专供」→「根据往年面试整理的高频题」
+- 安全做法：客观引述公开信息，区分「陈述事实」vs「暗示推荐」
+
+#### 3. 点击诱导
+- 「点击链接免费获取」→「我把题库整理在了图片第5张」
+- 「转发领取模板」→「需要可以参考主页其他笔记」
+- 「评论666自动发送」→「有问题可以在评论区交流」
+- 「转发给好友解锁完整版」→「觉得有用可以收藏方便查看」
+
+#### 4. 刺激消费（FOMO话术合规边界）
+- 「秒杀/秒没」→「很快招满」「名额有限」
+- 「再不抢就没了」→「建议尽早投递，招满即止」
+- 「错过就没机会」→「窗口期有限，建议把握」
+- 「万人疯抢」→「竞争非常激烈的热门岗位」
+- 用具体事实替代情绪化催促更安全
+
+#### 5. 迷信用语
+- 求职社区的「接offer」「上岸锦鲤」「好运降临」已形成社区亚文化，当前高度容忍
+- 「转发此锦鲤三天内必收到offer」→有风险（迷信承诺）
+- 「接offer好运，希望大家春招顺利」→安全
+- 关键：停留在「轻量化情绪表达」，不能变成「正式的迷信承诺」
+
+#### 6. 医疗用语
+- 「治愈求职焦虑」「修复被裁员创伤」→机审可能标记导致限流
+- 安全替代：「缓解焦虑」
+
+#### 7. 化妆品虚假宣传（间接启示）
+- 「7天拿到offer」「一个月上岸大厂」→话术结构同构于「XX天见效」
+- 安全替代：「帮你系统性提升面试能力」
+
+### 八、违禁内容与求职赛道关联度
+
+**★★★★★ 导流行为**（被处罚频率最高）：
+- 提及其他平台名称→限流甚至删帖
+- 使用平台代称（「绿色软件」=微信）→同样被识别
+- 「加VX领完整版」→改为「看主页」或站内群分享
+
+**★★★★☆ 炫富内容**：
+- 「年薪80万的offer」→「收到心仪公司的offer，分享准备过程」
+- 核心：把薪资作为「背景信息」而非「内容卖点」
+
+**★★★☆☆ 非原创内容**：
+- 同样的事实+不同的视角/增值信息→有原创性
+
+**★★★☆☆ 价值观**：
+- 海外求职内容避免中外对比性价值判断
+- 反就业情绪内容需搭配建设性出路
+
+### 九、合规写作速查
+
+标题检查：1)极限词? 2)具体薪资? 3)过度FOMO? 4)确定性结果承诺? 5)其他平台名称?
+正文检查：1)政策引述标明来源? 2)海外岗位无中外对比? 3)CTA合规? 4)截图真实? 5)无攻击性评价? 6)好运表达适度?
+
+### 十、九大高频场景合规改写
+1. 「全球顶级投行暑期实习，独家内推」→「一线国际投行暑期实习，少量内推名额分享」
+2. 「最后3天！再不投就没机会了！抢！」→「这5家企业本周五截止网申｜附直达链接和投递建议」
+3. 「25岁年薪60万，字节offer到手！」→「从三段实习到字节全职offer｜我的2年求职复盘」
+4. 「完整版100道SQL面试题,加微信免费领」→「100道SQL高频面试题｜整理在图2-图9，建议收藏慢慢刷」
+5. 「转发这条锦鲤，三天内必收到offer，超灵验！」→「春招加油帖 接offer好运！评论区一起许愿」
+6. 「跟着我的课程学7天，保你拿到大厂offer」→「课程重点帮你理清面试思路，过去学员面试通过率有明显提升」
+7. 「国家大力推荐去央企就业，国家认证铁饭碗」→「近期政策对央企招聘有明显扩招信号，人社部公开数据显示…」
+8. 「国内太卷了，还是美国DS岗香」→「分享美国DS岗面试流程和准备方法，给有需要的同学做参考」
+9. 「XX公司HR简直是垃圾」→「分享一段面试经历：XX公司面试流程存在时间管理问题，面试官准时性有提升空间」
+
+### 十一、审核弹性逻辑（六个关键变量）
+1. 账号属性：商业号/蓝V审核更严
+2. 内容意图：分享型内容违禁词触发阈值更高
+3. 词频密度：偶尔一个擦边词vs通篇高频使用，判定概率完全不同
+4. 举报触发：竞品互相举报常见
+5. 社区惯用语：已完成语义转化的词容忍度高
+6. 时间窗口：审核敏感期（315前后、两会期间）审核收紧
+
+### 十二、三条铁律
+1. 收藏驱动做「全」，转发驱动做「急」，评论驱动做「真」
+2. 封面决定点击率，标题决定搜索排名，首屏决定完读率，尾部CTA决定互动率
+3. 求职内容赛道本质是「信息不对称的消解」
+
+### 十三、发布策略
+- 周一：热点直击（本周新开招聘）→转发
+- 周三：干货信息（系统性资源合辑）→收藏
+- 周五：工具介绍（效率工具推荐）→收藏+评论
+- 周日：Offer晒单/轻话题→评论+点赞
+
+## 分析任务
+
+请基于以上完整知识库，对用户提供的${platformName}内容进行深度分析。
+
+${isBrief?`
+### 简明报告格式要求（严格遵守）
+
+如果检测到运营数据表格，先简要说明数据全貌（1~2句），然后进入「总-分-总」结构。
+
+Markdown部分采用「总-分-总」三段结构，总字数≤600字：
+1. **总**：概括整体水平、最大亮点和核心瓶颈
+2. **分**：3~5条加粗要点，每条1~2句（覆盖标题、合规、互动、平台适配中最关键的点）
+3. **总**：1~3条最优先的可执行行动
+
+绝对不要输出多个二级标题（##）章节。只用加粗和列表组织内容。简洁直给。
+`:`
+### 详细报告章节要求
+
+分析报告（Markdown部分）应该包含以下章节，每个章节需要深入、具体、有针对性：
+
+**如果检测到运营数据表格，必须首先输出以下章节：**
+
+## 数据驱动分析
+- 按互动率从高到低对所有帖子排名，标注排名原因
+- 互动率 = (点赞+转发+收藏+评论) / 阅读量 × 100%
+- TOP帖 vs 末位帖：用知识库的内容类型理论、标题公式、封面范式、用户心理模型深度解释表现差异
+- 各内容类型的平均互动率对比
+- 发布时间/日期与数据表现的关联
+- 引流转化漏斗分析（阅读→互动→私信/引流的转化路径）
+- 账号间/运营间的数据对比（如果有多账号/多运营）
+
+## 逐条标题合规扫描与优化
+对数据表中每条内容的标题逐一分析，按合规风险标注，并给出优化改写。
+
+**以下为通用分析章节（始终输出）：**
+
+## 内容类型判定与定位分析
+分析内容属于哪种类型，是否精准聚焦。
+
+## 标题深度分析
+分析标题是否符合公式，关键词使用情况，SEO/传播效果。给出具体优化建议和改写示例。
+
+## 内容结构评估
+评估Hook/Value/CTA三层结构的完整性和质量。
+
+## 互动潜力预测与优化
+基于用户心理模型预测各维度互动潜力，给出提升建议。
+
+## 合规风险详解
+对每个发现的风险点进行详细解释，说明审核逻辑和安全改写方案。引用知识库中的具体规则和场景。
+
+## 平台适配建议
+基于识别到的平台特性给出针对性的优化建议。
+
+## 优化行动清单
+按P0/P1/P2优先级给出可立即执行的优化建议。
+`}
+请确保分析深入具体、引用知识库中的精准框架和规则，而不是泛泛而谈。每条建议都要有依据。`;
+}
+
+/* ========== DeepSeek API Call (Fixed for text-only) ========== */
+async function callDeepSeekAPI(systemPrompt, userMessage, hasFiles) {
+  const messages = [
+    { role: 'system', content: systemPrompt }
+  ];
+
+  // DeepSeek API 只接受纯文本，如果有文件则提示用户
+  if (hasFiles && uploadedFiles.length > 0) {
+    const fileNames = uploadedFiles.map(f => f.name).join('、');
+    userMessage += `\n\n[注意：用户上传了以下文件：${fileNames}。由于API限制，暂时无法直接分析图片内容，请根据用户的文本描述进行分析]`;
+  }
+
+  messages.push({ role: 'user', content: userMessage });
+
+  const response = await fetch(DEEPSEEK_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: DEEPSEEK_MODEL,
+      messages: messages,
+      temperature: DEEPSEEK_TEMPERATURE,
+      stream: DEEPSEEK_STREAM
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API Error ${response.status}: ${errorText}`);
+  }
+
+  return response;
+}
+
+/* ========== Analysis ========== */
+async function startAnalysis(){
+  if(isAnalyzing) return;
+  const text=contentInput.value.trim();
+  const hasFiles=uploadedFiles.length>0;
+  if(!text&&!hasFiles){showModal('请输入内容或上传文件后再开始分析');return}
+
+  // 如果只有文件没有文本，提示用户
+  if(!text&&hasFiles){
+    showModal('当前版本暂不支持直接分析图片。请在文本框中描述图片内容（如：运营数据表格的内容、标题文案等），然后开始分析。');
+    return;
+  }
+
+  isAnalyzing=true;
+  analyzeBtn.disabled=true;
+  analyzeBtn.innerHTML='<svg style="animation:spin 1s linear infinite" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4m-7.07-3.93l2.83-2.83m8.48-8.48l2.83-2.83M2 12h4m12 0h4m-3.93 7.07l-2.83-2.83M7.76 7.76L4.93 4.93"/></svg>分析中…';
+
+  const loadingBar=document.getElementById('loadingBar');
+  loadingBar.classList.add('active');
+  loadingBar.classList.remove('done');
+  loadingBar.querySelector('.bar').style.animation='none';
+  void loadingBar.querySelector('.bar').offsetWidth;
+  loadingBar.querySelector('.bar').style.animation='';
+
+  const results=document.getElementById('results');
+  results.classList.add('show');
+  results.scrollIntoView({behavior:'smooth',block:'start'});
+
+  // Reset results
+  document.getElementById('analysisContent').innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><p>正在生成分析报告…</p></div>';
+  document.getElementById('complianceList').innerHTML='<div class="compliance-empty">分析中…</div>';
+  document.getElementById('dataDashboard').classList.remove('show');
+  if(chartInstances.performance){chartInstances.performance.destroy();chartInstances.performance=null}
+  if(chartInstances.engagement){chartInstances.engagement.destroy();chartInstances.engagement=null}
+  ['scoreOverall','scoreTitle','scoreStructure'].forEach(id=>document.getElementById(id).textContent='…');
+  document.getElementById('riskBadge').textContent='…';
+  document.getElementById('riskBadge').className='risk-badge';
+  document.getElementById('contentTypeTag').textContent='分析中…';
+  ['sbHookFill','sbValueFill','sbCTAFill'].forEach(id=>document.getElementById(id).style.width='0');
+  ['Forward','Save','Comment','Like'].forEach(k=>{
+    const el=document.getElementById('interact'+k);
+    el.querySelector('.ii-score').textContent='…';
+    el.classList.remove('primary');
+  });
+
+  const systemPrompt=buildSystemPrompt();
+  const platformLabel=currentPlatform==='auto'?'':currentPlatform==='xiaohongshu'?'小红书':'视频号';
+  let userMsg=currentPlatform==='auto'?'请分析以下内容（请自动识别平台）：\n\n':`请分析以下${platformLabel}内容：\n\n`;
+  userMsg+=text;
+
+  let fullContent='';
+  let jsonParsed=false;
+  let jsonData=null;
+
+  try {
+    const response = await callDeepSeekAPI(systemPrompt, userMsg, hasFiles);
+    
+    if (!DEEPSEEK_STREAM) {
+      // Non-streaming response
+      const data = await response.json();
+      fullContent = data.choices[0].message.content || '';
+      
+      // Try to parse JSON
+      const jsonMatch = fullContent.match(/```json\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        try {
+          jsonData = JSON.parse(jsonMatch[1]);
+          applyJsonData(jsonData);
+        } catch(e) {
+          console.error('JSON parse error:', e);
+        }
+      }
+      
+      // Render markdown
+      const afterJson = fullContent.replace(/```json[\s\S]*?```/, '').trim();
+      if (afterJson) {
+        document.getElementById('analysisContent').innerHTML = marked.parse(afterJson);
+      }
+      
+      loadingBar.classList.add('done');
+      finishAnalysis();
+    } else {
+      // Streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          loadingBar.classList.add('done');
+          document.getElementById('analysisContent').classList.remove('streaming-cursor');
+          finishAnalysis();
+          break;
+        }
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.slice(6);
+            if (jsonStr === '[DONE]') {
+              loadingBar.classList.add('done');
+              document.getElementById('analysisContent').classList.remove('streaming-cursor');
+              finishAnalysis();
+              break;
+            }
+            
+            try {
+              const data = JSON.parse(jsonStr);
+              const delta = data.choices[0]?.delta?.content || '';
+              fullContent += delta;
+              
+              // Try to parse JSON
+              if (!jsonParsed) {
+                const jsonMatch = fullContent.match(/```json\s*([\s\S]*?)```/);
+                if (jsonMatch) {
+                  try {
+                    jsonData = JSON.parse(jsonMatch[1]);
+                    jsonParsed = true;
+                    applyJsonData(jsonData);
+                  } catch(e) {
+                    // JSON not yet complete
+                  }
+                }
+              }
+              
+              // Render markdown (everything after JSON block)
+              if (jsonParsed) {
+                const afterJson = fullContent.replace(/```json[\s\S]*?```/, '').trim();
+                if (afterJson) {
+                  const el = document.getElementById('analysisContent');
+                  el.innerHTML = marked.parse(afterJson);
+                  el.classList.add('streaming-cursor');
+                }
+              }
+            } catch(e) {
+              console.error('Stream parse error:', e);
+            }
+          }
+        }
+      }
+    }
+  } catch(err) {
+    loadingBar.classList.add('done');
+    console.error('Analysis error:', err);
+    document.getElementById('analysisContent').innerHTML='<div style="color:var(--red);padding:20px;text-align:center">分析出错：'+escHtml(String(err.message||err))+'<br>请检查API配置或稍后重试</div>';
+    finishAnalysis();
+  }
+}
+
+function applyJsonData(data){
+  // Scores
+  renderScores(data);
+  // Type tag
+  renderTypeTag(data);
+  // Content type chart
+  if(data.contentType?.scores) renderContentTypeChart(data.contentType.scores);
+  // Structure bars
+  if(data.structureAnalysis) renderStructureBars(data.structureAnalysis.hookScore,data.structureAnalysis.valueScore,data.structureAnalysis.ctaScore);
+  // Interaction
+  if(data.interactionPrediction) renderInteraction(data.interactionPrediction);
+  // Compliance
+  if(data.complianceCheck) renderCompliance(data.complianceCheck.issues);
+  // Operational data dashboard
+  if(data.operationalData&&data.operationalData.posts&&data.operationalData.posts.length>0){
+    renderDataDashboard(data.operationalData);
+  }
+}
+
+/* ========== Data Dashboard Rendering ========== */
+function fmtNum(n){
+  if(n==null||isNaN(n)) return '0';
+  if(n>=10000) return (n/10000).toFixed(1)+'万';
+  if(n>=1000) return (n/1000).toFixed(1)+'k';
+  return String(n);
+}
+
+function renderDataDashboard(opData){
+  const dashboard=document.getElementById('dataDashboard');
+  dashboard.classList.add('show');
+
+  const posts=opData.posts;
+  const summary=opData.summary||{};
+
+  // Summary cards
+  const grid=document.getElementById('dataSummaryGrid');
+  const cards=[
+    {label:'总帖数',val:summary.totalPosts||posts.length,hl:false},
+    {label:'总阅读',val:fmtNum(summary.totalReads||posts.reduce((s,p)=>s+(p.reads||0),0)),hl:true},
+    {label:'均阅读',val:fmtNum(summary.avgReads||Math.round(posts.reduce((s,p)=>s+(p.reads||0),0)/posts.length)),hl:false},
+    {label:'总互动',val:fmtNum(posts.reduce((s,p)=>s+(p.likes||0)+(p.forwards||0)+(p.saves||0)+(p.comments||0),0)),hl:true},
+    {label:'均互动率',val:(summary.avgEngagementRate||calcAvgEngagement(posts)).toFixed(1)+'%',hl:true}
+  ];
+  grid.innerHTML=cards.map(c=>`<div class="ds-card${c.hl?' ds-highlight':''}"><div class="ds-val">${c.val}</div><div class="ds-label">${c.label}</div></div>`).join('');
+
+  // Performance chart (stacked bar)
+  renderPerformanceChart(posts);
+  // Engagement rate chart
+  renderEngagementChart(posts);
+  // Data table
+  renderDataTable(posts);
+}
+
+function calcAvgEngagement(posts){
+  const rates=posts.map(p=>{
+    const r=p.reads||1;
+    const eng=(p.likes||0)+(p.forwards||0)+(p.saves||0)+(p.comments||0);
+    return(eng/r)*100;
+  });
+  return rates.reduce((a,b)=>a+b,0)/rates.length;
+}
+
+function renderPerformanceChart(posts){
+  const ctx=document.getElementById('chartPerformance').getContext('2d');
+  if(chartInstances.performance) chartInstances.performance.destroy();
+  const c=getChartColors();
+  const isDark=document.documentElement.classList.contains('dark');
+  const labels=posts.map((p,i)=>{
+    const t=p.title||('帖子'+(i+1));
+    return t.length>12?t.slice(0,12)+'…':t;
+  });
+
+  chartInstances.performance=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:labels,
+      datasets:[
+        {label:'点赞',data:posts.map(p=>p.likes||0),backgroundColor:isDark?'#5EEAD4':'#0E7569',borderRadius:2},
+        {label:'转发',data:posts.map(p=>p.forwards||0),backgroundColor:isDark?'#60A5FA':'#2563EB',borderRadius:2},
+        {label:'收藏',data:posts.map(p=>p.saves||0),backgroundColor:isDark?'#FBBF24':'#D97706',borderRadius:2},
+        {label:'评论',data:posts.map(p=>p.comments||0),backgroundColor:isDark?'#F87171':'#DC2626',borderRadius:2}
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{font:{size:11,family:'Noto Sans SC'},color:c.text,boxWidth:12,padding:12}},
+        tooltip:{callbacks:{title:function(items){const i=items[0].dataIndex;return posts[i].title||('帖子'+(i+1))}}}
+      },
+      scales:{
+        x:{stacked:true,ticks:{font:{size:10,family:'Noto Sans SC'},color:c.text,maxRotation:45},grid:{display:false}},
+        y:{stacked:true,ticks:{font:{size:10,family:'IBM Plex Mono'},color:c.text},grid:{color:c.grid}}
+      }
+    }
+  });
+}
+
+function renderEngagementChart(posts){
+  const ctx=document.getElementById('chartEngagement').getContext('2d');
+  if(chartInstances.engagement) chartInstances.engagement.destroy();
+  const c=getChartColors();
+  const labels=posts.map((p,i)=>{
+    const t=p.title||('帖子'+(i+1));
+    return t.length>12?t.slice(0,12)+'…':t;
+  });
+  const rates=posts.map(p=>{
+    const r=p.reads||1;
+    return parseFloat((((p.likes||0)+(p.forwards||0)+(p.saves||0)+(p.comments||0))/r*100).toFixed(2));
+  });
+  const avgRate=rates.reduce((a,b)=>a+b,0)/rates.length;
+
+  chartInstances.engagement=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:labels,
+      datasets:[
+        {label:'互动率 %',data:rates,backgroundColor:rates.map(r=>r>=avgRate?c.ac:(document.documentElement.classList.contains('dark')?'#3A3A36':'#D0D0CC')),borderRadius:3},
+        {label:'平均线',data:rates.map(()=>avgRate),type:'line',borderColor:document.documentElement.classList.contains('dark')?'#F87171':'#C53030',borderWidth:1.5,borderDash:[4,3],pointRadius:0,fill:false}
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{font:{size:11,family:'Noto Sans SC'},color:c.text,boxWidth:12,padding:12}},
+        tooltip:{callbacks:{
+          title:function(items){const i=items[0].dataIndex;return posts[i].title||('帖子'+(i+1))},
+          label:function(item){return item.dataset.label+': '+item.raw.toFixed(2)+'%'}
+        }}
+      },
+      scales:{
+        x:{ticks:{font:{size:10,family:'Noto Sans SC'},color:c.text,maxRotation:45},grid:{display:false}},
+        y:{ticks:{font:{size:10,family:'IBM Plex Mono'},color:c.text,callback:function(v){return v+'%'}},grid:{color:c.grid}}
+      }
+    }
+  });
+}
+
+function renderDataTable(posts){
+  const table=document.getElementById('dataTable');
+  const thead=table.querySelector('thead');
+  const tbody=table.querySelector('tbody');
+
+  thead.innerHTML='<tr><th>#</th><th>日期</th><th>标题</th><th>类型</th><th class="num">阅读</th><th class="num">点赞</th><th class="num">转发</th><th class="num">收藏</th><th class="num">评论</th><th class="num">互动率</th></tr>';
+
+  // Sort by engagement rate desc
+  const sorted=posts.map((p,i)=>{
+    const r=p.reads||1;
+    const eng=(p.likes||0)+(p.forwards||0)+(p.saves||0)+(p.comments||0);
+    return{...p,idx:i,engRate:(eng/r*100)};
+  }).sort((a,b)=>b.engRate-a.engRate);
+
+  const maxRate=Math.max(...sorted.map(p=>p.engRate),1);
+
+  tbody.innerHTML=sorted.map((p,rank)=>{
+    const rankBadge=rank<3?`<span class="rank-badge rank-${rank+1}">${rank+1}</span>`:`<span style="display:inline-block;width:20px;text-align:center;margin-right:4px;font-size:11px;color:var(--tx4)">${rank+1}</span>`;
+    const barW=Math.max(2,Math.round(p.engRate/maxRate*80));
+    return `<tr>
+      <td>${rankBadge}</td>
+      <td style="font-size:11px;color:var(--tx3)">${escHtml(p.date||'')}</td>
+      <td class="title-cell" title="${escHtml(p.title||'')}">${escHtml(p.title||'—')}</td>
+      <td><span class="type-pill">${escHtml(p.contentType||'—')}</span></td>
+      <td class="num">${fmtNum(p.reads)}</td>
+      <td class="num">${fmtNum(p.likes)}</td>
+      <td class="num">${fmtNum(p.forwards)}</td>
+      <td class="num">${fmtNum(p.saves)}</td>
+      <td class="num">${fmtNum(p.comments)}</td>
+      <td class="num">${p.engRate.toFixed(1)}%<span class="engagement-bar" style="width:${barW}px"></span></td>
+    </tr>`;
+  }).join('');
+}
+
+function finishAnalysis(){
+  isAnalyzing=false;
+  analyzeBtn.disabled=false;
+  analyzeBtn.innerHTML='开始分析<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+  updateInputState();
+}
+
+/* ========== Spin animation ========== */
+const styleEl=document.createElement('style');
+styleEl.textContent='@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+document.head.appendChild(styleEl);
+
+/* ========== Theme change: redraw charts ========== */
+const themeObserver=new MutationObserver(()=>{
+  if(chartInstances.contentType&&chartInstances.contentType.data){
+    const c=getChartColors();
+    const ds=chartInstances.contentType.data.datasets[0];
+    ds.backgroundColor=c.acAlpha;ds.borderColor=c.ac;ds.pointBackgroundColor=c.ac;ds.pointBorderColor=c.bg2;
+    const r=chartInstances.contentType.options.scales.r;
+    r.ticks.color=c.text;r.grid.color=c.grid;r.angleLines.color=c.grid;r.pointLabels.color=c.text;
+    chartInstances.contentType.update();
+  }
+  // Re-render data charts on theme change if operational data exists
+  if(chartInstances.performance||chartInstances.engagement){
+    const dashboard=document.getElementById('dataDashboard');
+    if(dashboard.classList.contains('show')){
+      // Charts need full re-render for theme colors, but we don't store posts data separately
+      // Instead update basic colors
+      [chartInstances.performance,chartInstances.engagement].forEach(ch=>{
+        if(!ch) return;
+        const c=getChartColors();
+        ch.options.scales.x.ticks.color=c.text;
+        ch.options.scales.y.ticks.color=c.text;
+        ch.options.scales.y.grid.color=c.grid;
+        if(ch.options.plugins.legend) ch.options.plugins.legend.labels.color=c.text;
+        ch.update();
+      });
+    }
+  }
+});
+themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+
+/* ========== marked config ========== */
+marked.setOptions({breaks:true,gfm:true});
+</script>
+</body>
+</html>
